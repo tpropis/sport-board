@@ -6,6 +6,7 @@ import { SOUND_OPTIONS } from "@/lib/types";
 import { useStore } from "@/lib/store";
 import { Toggle } from "./ui";
 import { BRAVES_NATIONAL_OPTIONS } from "@/lib/constants";
+import { NETWORKS, channelFor, matchNetwork, getProvider } from "@/lib/providers";
 
 const MANUAL_LABELS: AssignmentLabel[] = ["LOCAL", "BIG GAME", "PLAYOFF"];
 
@@ -63,6 +64,19 @@ export function AssignmentEditor({
     }));
 
   const tvOptions = activeBar.tvOrder;
+  const provider = getProvider(activeBar.providerId);
+
+  // Picking a known network auto-fills the channel number for the bar's provider.
+  function setWatchOn(value: string) {
+    const net = matchNetwork(value);
+    const ch = channelFor(net ?? "", activeBar.providerId);
+    setA((prev) => ({
+      ...prev,
+      watchOn: value,
+      ...(ch ? { directvChannel: ch } : {}),
+    }));
+  }
+  const suggestedChannel = channelFor(matchNetwork(a.watchOn) ?? "", activeBar.providerId);
 
   return (
     <div className="flex max-h-[88vh] flex-col">
@@ -174,22 +188,34 @@ export function AssignmentEditor({
               className="input"
               value={a.watchOn ?? ""}
               placeholder="BravesVision, FOX, ESPN…"
-              onChange={(e) => set("watchOn", e.target.value)}
-              list="braves-national"
+              onChange={(e) => setWatchOn(e.target.value)}
+              list="network-list"
             />
-            <datalist id="braves-national">
+            <datalist id="network-list">
+              {NETWORKS.map((o) => (
+                <option key={o} value={o} />
+              ))}
               {BRAVES_NATIONAL_OPTIONS.map((o) => (
                 <option key={o} value={o} />
               ))}
             </datalist>
           </Labeled>
-          <Labeled label="DIRECTV channel #">
+          <Labeled label={`Channel #${provider ? ` · ${provider.name}` : ""}`}>
             <input
               className="input"
               value={a.directvChannel ?? ""}
-              placeholder="645"
+              placeholder={provider?.type === "streaming" ? "by app" : "e.g. 219"}
               onChange={(e) => set("directvChannel", e.target.value)}
             />
+            {suggestedChannel && a.directvChannel !== suggestedChannel && (
+              <button
+                type="button"
+                onClick={() => set("directvChannel", suggestedChannel)}
+                className="mt-1 text-xs text-amber-glow hover:underline"
+              >
+                Use {provider?.name} ch {suggestedChannel} →
+              </button>
+            )}
           </Labeled>
 
           <Labeled label="Streaming app">

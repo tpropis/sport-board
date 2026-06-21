@@ -5,6 +5,8 @@ import { useStore } from "@/lib/store";
 import { SectionHeader, Pill } from "@/components/ui";
 import { BRAVES_NATIONAL_OPTIONS } from "@/lib/constants";
 import type { PriorityRule } from "@/lib/types";
+import { getMarket } from "@/lib/markets";
+import Link from "next/link";
 
 export default function PriorityRulesPage() {
   const { activeBar, updateBar } = useStore();
@@ -48,9 +50,14 @@ export default function PriorityRulesPage() {
       </SectionHeader>
 
       <p className="max-w-3xl text-sm text-chalk-dim">
-        When two games compete for the same TV, higher rank wins. Local Atlanta &amp;
-        Georgia teams sit at the top by default. Reorder to match your crowd.
+        When two games compete for the same TV, higher rank wins. The board&apos;s{" "}
+        <strong className="text-chalk">Auto-prioritize</strong> button ranks games by
+        estimated <strong className="text-chalk">crowd draw</strong> — what fills seats
+        and keeps the room ordering — using your market below. This list is your manual
+        override / standing philosophy.
       </p>
+
+      <MarketPanel />
 
       <div className="grid gap-6 lg:grid-cols-[1.4fr_1fr]">
         <div className="flex flex-col gap-1.5">
@@ -144,6 +151,59 @@ export default function PriorityRulesPage() {
           </div>
         </aside>
       </div>
+    </div>
+  );
+}
+
+function MarketPanel() {
+  const { activeBar } = useStore();
+  const market = getMarket(activeBar.market);
+
+  return (
+    <div className="panel p-5">
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div>
+          <div className="font-mono text-[11px] uppercase tracking-[0.2em] text-amber-accent/80">
+            Crowd-draw engine
+          </div>
+          <h2 className="mt-1 font-display text-xl font-bold text-chalk">
+            {market ? `Tuned for ${market.name}` : "No market set"}
+          </h2>
+        </div>
+        <Link href="/setup" className="btn btn-ghost">
+          Change market →
+        </Link>
+      </div>
+
+      <p className="mt-2 max-w-2xl text-sm text-chalk-dim">
+        Draw = local-team pull + regional sport taste + event magnitude
+        (playoff / final) + national-event draw. The highest-draw games go on the
+        best TVs first — the order that fills seats and keeps the room ordering.
+      </p>
+
+      {market && (
+        <div className="mt-4">
+          <div className="field-label mb-2">
+            Local teams by crowd draw
+          </div>
+          <div className="flex flex-wrap gap-2">
+            {market.teams
+              .slice()
+              .sort((a, b) => b.draw - a.draw)
+              .map((t) => (
+                <span
+                  key={t.name}
+                  className="inline-flex items-center gap-2 rounded-full border border-amber-accent/40 bg-amber-accent/10 px-3 py-1 text-sm text-amber-glow"
+                >
+                  {t.name}
+                  <span className="tnum rounded bg-ink-950/50 px-1.5 font-mono text-[10px]">
+                    {t.draw}
+                  </span>
+                </span>
+              ))}
+          </div>
+        </div>
+      )}
     </div>
   );
 }

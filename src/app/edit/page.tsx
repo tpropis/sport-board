@@ -6,6 +6,8 @@ import { useStore, todayISO, sortByTvOrder } from "@/lib/store";
 import { AssignmentEditor } from "@/components/AssignmentEditor";
 import { SectionHeader, TVBadge, Toggle } from "@/components/ui";
 import type { Assignment } from "@/lib/types";
+import { autoPrioritize, scoreEvent } from "@/lib/priority";
+import { getMarket } from "@/lib/markets";
 
 function blankAssignment(id: string, tvNumber: number, priority: number): Assignment {
   return {
@@ -45,6 +47,13 @@ export default function EditBoard() {
     setEditing(blankAssignment(newAssignmentId(), nextTv, nextPri));
   }
 
+  const market = getMarket(activeBar.market);
+
+  function autoRank() {
+    const reranked = autoPrioritize(board.assignments, activeBar.market);
+    reranked.forEach((a) => upsertAssignment(today, a));
+  }
+
   function movePriority(a: Assignment, dir: -1 | 1) {
     const ordered = [...assignments].sort((x, y) => x.priority - y.priority);
     const idx = ordered.findIndex((x) => x.id === a.id);
@@ -65,6 +74,18 @@ export default function EditBoard() {
 
       {/* Board controls */}
       <div className="panel flex flex-wrap items-center gap-2 p-4">
+        <button
+          onClick={autoRank}
+          className="btn btn-signal"
+          disabled={board.assignments.length === 0}
+          title={
+            market
+              ? `Rank by crowd draw for ${market.name}`
+              : "Set a market in Bar Setup for location-aware ranking"
+          }
+        >
+          ⚡ Auto-prioritize by draw
+        </button>
         <button onClick={() => duplicateYesterday(today)} className="btn btn-ghost">
           ⎘ Duplicate previous board
         </button>
@@ -120,6 +141,17 @@ export default function EditBoard() {
               </div>
               <span className="tnum w-8 text-center font-mono text-xs text-chalk-faint">
                 #{a.priority}
+              </span>
+              <span
+                className="tnum hidden w-12 shrink-0 flex-col items-center rounded border border-ink-600 bg-ink-900 py-1 font-mono sm:flex"
+                title={scoreEvent(a, market).reasons.join("\n")}
+              >
+                <span className="text-sm font-bold text-amber-glow">
+                  {scoreEvent(a, market).score}
+                </span>
+                <span className="text-[8px] uppercase tracking-wider text-chalk-faint">
+                  draw
+                </span>
               </span>
               <TVBadge number={a.tvNumber} size="md" />
               <div className="min-w-0 flex-1">

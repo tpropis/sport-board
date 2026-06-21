@@ -131,7 +131,11 @@ export interface Bar {
   priorityRules: PriorityRule[];
   soundRules: SoundRule[];
   localTeams: string[];
+  market?: string; // market key (see lib/markets) derived from location
+  lat?: number;
+  lng?: number;
   defaultProvider: string;
+  providerId?: string; // TV provider id (see lib/providers) — drives channel #s
   defaultSoundRule: SoundRuleValue;
   staffViewEnabled: boolean;
   setupNotes: string;

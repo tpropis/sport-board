@@ -15,6 +15,7 @@ const NAV: { href: string; label: string; group: string }[] = [
   { href: "/tv-layout", label: "TV Layout & Photos", group: "Configure" },
   { href: "/setup", label: "Bar Setup", group: "Configure" },
   { href: "/services", label: "Services & Streaming", group: "Configure" },
+  { href: "/channels", label: "Channel Guide", group: "Configure" },
   { href: "/priority", label: "Priority Rules", group: "Configure" },
   { href: "/sound", label: "Sound Rules", group: "Configure" },
   { href: "/vision", label: "Platform Vision", group: "About" },

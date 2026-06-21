@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useStore, todayISO, sortByTvOrder } from "@/lib/store";
+import { getProvider } from "@/lib/providers";
 
 function formatLong(iso: string): string {
   const [y, m, d] = iso.split("-").map(Number);
@@ -19,6 +20,7 @@ export default function PrintView() {
   const board = getBoard(today);
   const assignments = sortByTvOrder(board.assignments, activeBar.tvOrder);
   const mainPhoto = activeBar.layoutPhotos.find((p) => p.markers.length > 0);
+  const providerName = getProvider(activeBar.providerId)?.name ?? "Channel";
 
   return (
     <div className="min-h-screen bg-ink-900 py-6 print:bg-white print:py-0">
@@ -98,7 +100,7 @@ export default function PrintView() {
           <table className="w-full border-collapse text-left text-[12px]">
             <thead>
               <tr className="border-y-2 border-black">
-                {["TV", "Pri", "Game / Event", "Time", "Watch On", "DIRECTV", "Streaming", "Device / Remote", "Sound", "✓"].map(
+                {["TV", "Pri", "Game / Event", "Time", "Watch On", providerName, "Streaming", "Device / Remote", "Sound", "✓"].map(
                   (c) => (
                     <th key={c} className="px-1.5 py-1.5 font-bold uppercase">
                       {c}

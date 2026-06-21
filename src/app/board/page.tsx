@@ -6,6 +6,7 @@ import { useStore, todayISO, sortByTvOrder } from "@/lib/store";
 import { AssignmentCard } from "@/components/AssignmentCard";
 import { SectionHeader, TVBadge, LabelChip, Pill } from "@/components/ui";
 import { deriveLabels } from "@/lib/constants";
+import { getProvider } from "@/lib/providers";
 
 function formatLong(iso: string): string {
   const [y, m, d] = iso.split("-").map(Number);
@@ -38,6 +39,7 @@ export default function TodaysBoard() {
   const board = getBoard(today);
   const assignments = sortByTvOrder(board.assignments, activeBar.tvOrder);
   const confirmed = assignments.filter((a) => a.confirmed).length;
+  const providerName = getProvider(activeBar.providerId)?.name ?? "Channel";
 
   return (
     <div className="flex flex-col gap-6">
@@ -86,7 +88,7 @@ export default function TodaysBoard() {
                     key={c}
                     className="whitespace-nowrap px-3 py-3 font-mono text-[10px] uppercase tracking-wider text-chalk-faint"
                   >
-                    {c}
+                    {c === "DIRECTV" ? providerName : c}
                   </th>
                 ))}
               </tr>

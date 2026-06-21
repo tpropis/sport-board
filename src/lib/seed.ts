@@ -4,6 +4,7 @@ import {
   DEFAULT_SOUND_RULES,
   SERVICE_CATALOG,
 } from "./constants";
+import { autoPrioritize } from "./priority";
 
 /** A simple SVG "bar wall" placeholder so the photo-mapping feature is usable
  *  out of the box. Managers replace this by uploading a real bar photo. */
@@ -171,7 +172,11 @@ function buildBar(): Bar {
       "Georgia Bulldogs",
       "Georgia Tech",
     ],
+    market: "atlanta",
+    lat: 33.749,
+    lng: -84.388,
     defaultProvider: "DIRECTV",
+    providerId: "directv",
     defaultSoundRule: "Music stays on",
     staffViewEnabled: true,
     setupNotes: "Keno TV stays unchanged.",
@@ -326,7 +331,9 @@ function buildBoard(date: string): DailyBoard {
   return {
     date,
     published: true,
-    assignments,
+    // Priorities come straight from the draw engine so the seed matches what
+    // the "Auto-prioritize" button produces — local pull + demand first.
+    assignments: autoPrioritize(assignments, "atlanta"),
     generalNotes:
       "Father's Day + World Cup weekend. Multiple soccer feeds available on the Fox Sports app / Tubi (free) and Telemundo for Spanish. Golf Channel / USA Network carried early U.S. Open coverage. Keno TV stays unchanged.",
   };

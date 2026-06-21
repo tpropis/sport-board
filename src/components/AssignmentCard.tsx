@@ -3,6 +3,8 @@
 import type { Assignment } from "@/lib/types";
 import { deriveLabels } from "@/lib/constants";
 import { LabelChip, TVBadge } from "./ui";
+import { useStore } from "@/lib/store";
+import { getProvider } from "@/lib/providers";
 
 function Field({
   label,
@@ -41,6 +43,8 @@ export function AssignmentCard({
   a: Assignment;
   variant?: "board" | "staff";
 }) {
+  const { activeBar } = useStore();
+  const providerName = getProvider(activeBar.providerId)?.name ?? "Channel";
   const labels = deriveLabels(a);
   const matchup =
     a.team1 && a.team2 ? `${a.team1} vs ${a.team2}` : a.eventName;
@@ -93,7 +97,7 @@ export function AssignmentCard({
 
           <div className="mt-3 grid grid-cols-2 gap-x-4 gap-y-2.5 sm:grid-cols-3">
             <Field label="Watch On" value={a.watchOn} strong />
-            <Field label="DIRECTV Ch." value={a.directvChannel} strong />
+            <Field label={`${providerName} Ch.`} value={a.directvChannel} strong />
             <Field label="Streaming App" value={a.streamingApp} />
             <Field label="Device" value={a.device} />
             <Field label="Remote" value={a.remote} />
