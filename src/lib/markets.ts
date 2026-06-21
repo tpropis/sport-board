@@ -83,6 +83,7 @@ export const MARKETS: Market[] = [
       t("Atlanta Hawks", "NBA", 72),
       t("Atlanta United", "MLS", 66, "United"),
       t("Georgia Tech", "CFB", 58, "Tech"),
+      t("Atlanta Dream", "WNBA", 50, "Dream"),
     ],
   },
   {

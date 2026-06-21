@@ -8,6 +8,7 @@ import { Toggle } from "./ui";
 
 const NAV: { href: string; label: string; group: string }[] = [
   { href: "/", label: "Command Center", group: "Operate" },
+  { href: "/schedule", label: "Full Schedule", group: "Operate" },
   { href: "/board", label: "Today's Board", group: "Operate" },
   { href: "/edit", label: "Edit Board", group: "Operate" },
   { href: "/staff", label: "Staff View", group: "Operate" },

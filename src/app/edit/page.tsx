@@ -86,6 +86,9 @@ export default function EditBoard() {
         >
           ⚡ Auto-prioritize by draw
         </button>
+        <Link href="/schedule" className="btn btn-ghost">
+          📡 Add from full schedule
+        </Link>
         <button onClick={() => duplicateYesterday(today)} className="btn btn-ghost">
           ⎘ Duplicate previous board
         </button>

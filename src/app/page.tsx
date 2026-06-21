@@ -66,9 +66,12 @@ export default function CommandCenter() {
                 TV Layout
               </Link>
             </div>
-            <div className="mt-2.5 grid gap-2.5 sm:grid-cols-2">
+            <div className="mt-2.5 grid gap-2.5 sm:grid-cols-3">
+              <Link href="/schedule" className="btn btn-ghost py-2.5">
+                📡 Full Schedule
+              </Link>
               <Link href="/staff" className="btn btn-signal py-2.5">
-                → Staff View (bartenders)
+                → Staff View
               </Link>
               <Link href="/print" className="btn btn-ghost py-2.5">
                 🖨 Print Sheet
