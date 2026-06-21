@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useStore, todayISO, sortByTvOrder } from "@/lib/store";
+import { useStore, todayInZone, zoneLabel, sortByTvOrder } from "@/lib/store";
 import { getProvider } from "@/lib/providers";
 
 function formatLong(iso: string): string {
@@ -16,11 +16,12 @@ function formatLong(iso: string): string {
 
 export default function PrintView() {
   const { activeBar, getBoard } = useStore();
-  const today = todayISO();
+  const today = todayInZone(activeBar.timezone);
   const board = getBoard(today);
   const assignments = sortByTvOrder(board.assignments, activeBar.tvOrder);
   const mainPhoto = activeBar.layoutPhotos.find((p) => p.markers.length > 0);
   const providerName = getProvider(activeBar.providerId)?.name ?? "Channel";
+  const tz = zoneLabel(activeBar.timezone);
 
   return (
     <div className="min-h-screen bg-ink-900 py-6 print:bg-white print:py-0">
@@ -41,7 +42,10 @@ export default function PrintView() {
             <h1 className="text-3xl font-extrabold uppercase tracking-tight">
               {activeBar.name} GameBoard
             </h1>
-            <p className="text-sm text-neutral-600">{formatLong(today)}</p>
+            <p className="text-sm text-neutral-600">
+              {formatLong(today)}
+              {tz && ` · all times ${tz}`}
+            </p>
           </div>
           <div className="text-right">
             <div className="text-[10px] font-bold uppercase tracking-widest text-neutral-500">
@@ -100,7 +104,7 @@ export default function PrintView() {
           <table className="w-full border-collapse text-left text-[12px]">
             <thead>
               <tr className="border-y-2 border-black">
-                {["TV", "Pri", "Game / Event", "Time", "Watch On", providerName, "Streaming", "Device / Remote", "Sound", "✓"].map(
+                {["TV", "Pri", "Game / Event", tz ? `Time (${tz})` : "Time", "Watch On", providerName, "Streaming", "Device / Remote", "Sound", "✓"].map(
                   (c) => (
                     <th key={c} className="px-1.5 py-1.5 font-bold uppercase">
                       {c}

@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useState } from "react";
-import { useStore, todayISO, sortByTvOrder } from "@/lib/store";
+import { useStore, todayInZone, zoneLabel, sortByTvOrder } from "@/lib/store";
 import { AssignmentCard } from "@/components/AssignmentCard";
 import { LayoutViewer } from "@/components/PhotoMapper";
 import { TVBadge } from "@/components/ui";
@@ -18,9 +18,10 @@ function formatLong(iso: string): string {
 
 export default function StaffView() {
   const { activeBar, getBoard, ready } = useStore();
-  const today = todayISO();
+  const today = todayInZone(activeBar.timezone);
   const board = getBoard(today);
   const assignments = sortByTvOrder(board.assignments, activeBar.tvOrder);
+  const tz = zoneLabel(activeBar.timezone);
   const photos = activeBar.layoutPhotos.filter((p) => p.markers.length > 0);
   const [activePhoto, setActivePhoto] = useState(0);
 
@@ -43,6 +44,7 @@ export default function StaffView() {
             </div>
             <div className="font-mono text-[11px] uppercase tracking-widest text-amber-accent/80">
               Staff Board · {formatLong(today)}
+              {tz && <span className="text-chalk-faint"> · all times {tz}</span>}
             </div>
           </div>
           <Link href="/" className="btn btn-ghost px-3 py-1.5 text-xs no-print">

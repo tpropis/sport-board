@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { useStore } from "@/lib/store";
+import { useStore, US_TIMEZONES, zoneLabel } from "@/lib/store";
 import { SectionHeader, TVBadge, Toggle } from "@/components/ui";
 import { SOUND_OPTIONS } from "@/lib/types";
 import type { Device, Remote, SoundRuleValue, TV } from "@/lib/types";
@@ -374,6 +374,7 @@ function LocationMarket() {
     if (!m) return;
     updateBar({
       market: m.key,
+      timezone: m.timezone,
       lat: m.lat,
       lng: m.lng,
       location: m.name,
@@ -412,6 +413,28 @@ function LocationMarket() {
                 </option>
               ))}
             </select>
+          </label>
+
+          <label className="block">
+            <span className="field-label">
+              Timezone {activeBar.timezone ? `· now ${zoneLabel(activeBar.timezone)}` : ""}
+            </span>
+            <select
+              className="input mt-1"
+              value={activeBar.timezone ?? ""}
+              onChange={(e) => updateBar({ timezone: e.target.value })}
+            >
+              <option value="">— select a timezone —</option>
+              {US_TIMEZONES.map((z) => (
+                <option key={z.value} value={z.value}>
+                  {z.label}
+                </option>
+              ))}
+            </select>
+            <p className="mt-1 text-xs text-chalk-faint">
+              Picking a market sets this automatically. All board, staff, and print
+              times display in this zone.
+            </p>
           </label>
 
           <div className="rounded-md border border-ink-700 bg-ink-900/50 p-3">

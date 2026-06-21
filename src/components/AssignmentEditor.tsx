@@ -3,7 +3,7 @@
 import { useState } from "react";
 import type { Assignment, AssignmentLabel, SoundRuleValue } from "@/lib/types";
 import { SOUND_OPTIONS } from "@/lib/types";
-import { useStore } from "@/lib/store";
+import { useStore, zoneLabel } from "@/lib/store";
 import { Toggle } from "./ui";
 import { BRAVES_NATIONAL_OPTIONS } from "@/lib/constants";
 import { NETWORKS, channelFor, matchNetwork, getProvider } from "@/lib/providers";
@@ -166,7 +166,7 @@ export function AssignmentEditor({
             />
           </Labeled>
 
-          <Labeled label="Start time">
+          <Labeled label={`Start time${zoneLabel(activeBar.timezone) ? ` (${zoneLabel(activeBar.timezone)})` : ""}`}>
             <input
               className="input"
               value={a.startTime ?? ""}

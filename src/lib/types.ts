@@ -132,6 +132,7 @@ export interface Bar {
   soundRules: SoundRule[];
   localTeams: string[];
   market?: string; // market key (see lib/markets) derived from location
+  timezone?: string; // IANA timezone for the bar's location, e.g. America/New_York
   lat?: number;
   lng?: number;
   defaultProvider: string;

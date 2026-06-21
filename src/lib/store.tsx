@@ -20,7 +20,7 @@ import { buildSeedState } from "./seed";
 
 // Bump this when the seed shape/data changes so returning browsers re-seed
 // instead of showing a stale board from a previous version.
-const STORAGE_KEY = "gameboard-pro:v3";
+const STORAGE_KEY = "gameboard-pro:v4";
 
 export function todayISO(): string {
   // Use local date so the "board day" matches the bar's day.
@@ -28,6 +28,59 @@ export function todayISO(): string {
   const off = d.getTimezoneOffset() * 60000;
   return new Date(d.getTime() - off).toISOString().slice(0, 10);
 }
+
+/** Today's date (YYYY-MM-DD) in a specific IANA timezone — the bar's day. */
+export function todayInZone(tz?: string): string {
+  if (!tz) return todayISO();
+  try {
+    return new Intl.DateTimeFormat("en-CA", {
+      timeZone: tz,
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit",
+    }).format(new Date());
+  } catch {
+    return todayISO();
+  }
+}
+
+const ZONE_ABBREV: Record<string, string> = {
+  "America/New_York": "ET",
+  "America/Chicago": "CT",
+  "America/Denver": "MT",
+  "America/Phoenix": "MST",
+  "America/Los_Angeles": "PT",
+  "America/Anchorage": "AKT",
+  "Pacific/Honolulu": "HT",
+};
+
+/** Short, bar-friendly timezone label, e.g. "ET". */
+export function zoneLabel(tz?: string): string {
+  if (!tz) return "";
+  if (ZONE_ABBREV[tz]) return ZONE_ABBREV[tz];
+  try {
+    const part = new Intl.DateTimeFormat("en-US", {
+      timeZone: tz,
+      timeZoneName: "short",
+    })
+      .formatToParts(new Date())
+      .find((p) => p.type === "timeZoneName");
+    return part?.value ?? "";
+  } catch {
+    return "";
+  }
+}
+
+/** US timezones offered in Bar Setup. */
+export const US_TIMEZONES: { value: string; label: string }[] = [
+  { value: "America/New_York", label: "Eastern (ET)" },
+  { value: "America/Chicago", label: "Central (CT)" },
+  { value: "America/Denver", label: "Mountain (MT)" },
+  { value: "America/Phoenix", label: "Arizona (MST, no DST)" },
+  { value: "America/Los_Angeles", label: "Pacific (PT)" },
+  { value: "America/Anchorage", label: "Alaska (AKT)" },
+  { value: "Pacific/Honolulu", label: "Hawaii (HT)" },
+];
 
 export function emptyBoard(date: string): DailyBoard {
   return { date, published: false, assignments: [], generalNotes: "" };
@@ -64,7 +117,7 @@ interface StoreContextValue {
 const StoreContext = createContext<StoreContextValue | null>(null);
 
 export function StoreProvider({ children }: { children: React.ReactNode }) {
-  const [state, setState] = useState<AppState>(() => buildSeedState(todayISO()));
+  const [state, setState] = useState<AppState>(() => buildSeedState(todayInZone("America/New_York")));
   const [ready, setReady] = useState(false);
   const [managerMode, setManagerMode] = useState(true);
 
@@ -263,7 +316,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
   );
 
   const resetAll = useCallback(() => {
-    const fresh = buildSeedState(todayISO());
+    const fresh = buildSeedState(todayInZone("America/New_York"));
     setState(fresh);
   }, []);
 

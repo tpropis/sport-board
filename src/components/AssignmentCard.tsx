@@ -3,7 +3,7 @@
 import type { Assignment } from "@/lib/types";
 import { deriveLabels } from "@/lib/constants";
 import { LabelChip, TVBadge } from "./ui";
-import { useStore } from "@/lib/store";
+import { useStore, zoneLabel } from "@/lib/store";
 import { getProvider } from "@/lib/providers";
 
 function Field({
@@ -45,6 +45,7 @@ export function AssignmentCard({
 }) {
   const { activeBar } = useStore();
   const providerName = getProvider(activeBar.providerId)?.name ?? "Channel";
+  const tz = zoneLabel(activeBar.timezone);
   const labels = deriveLabels(a);
   const matchup =
     a.team1 && a.team2 ? `${a.team1} vs ${a.team2}` : a.eventName;
@@ -81,6 +82,7 @@ export function AssignmentCard({
             {a.startTime && (
               <span className="tnum font-mono text-sm font-semibold text-amber-glow">
                 {a.startTime}
+                {tz && <span className="ml-1 text-amber-glow/70">{tz}</span>}
               </span>
             )}
           </div>

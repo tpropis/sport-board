@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useStore, todayISO, sortByTvOrder } from "@/lib/store";
+import { useStore, todayInZone, zoneLabel, sortByTvOrder } from "@/lib/store";
 import { LayoutViewer } from "@/components/PhotoMapper";
 import { TVBadge, Pill } from "@/components/ui";
 
@@ -17,10 +17,11 @@ function formatLong(iso: string): string {
 
 export default function CommandCenter() {
   const { activeBar, getBoard } = useStore();
-  const today = todayISO();
+  const today = todayInZone(activeBar.timezone);
   const board = getBoard(today);
   const assignments = sortByTvOrder(board.assignments, activeBar.tvOrder);
   const confirmed = assignments.filter((a) => a.confirmed).length;
+  const tz = zoneLabel(activeBar.timezone);
   const mainPhoto = activeBar.layoutPhotos.find((p) => p.markers.length > 0);
 
   return (
@@ -37,7 +38,10 @@ export default function CommandCenter() {
             <h1 className="mt-2 font-display text-4xl font-extrabold leading-none tracking-tightest text-chalk sm:text-5xl">
               Today&apos;s Command Board
             </h1>
-            <p className="mt-2 text-chalk-dim">{formatLong(today)}</p>
+            <p className="mt-2 text-chalk-dim">
+              {formatLong(today)}
+              {tz && <span className="text-chalk-faint"> · all times {tz}</span>}
+            </p>
 
             <div className="mt-5 flex flex-wrap gap-2.5">
               <Pill tone={board.published ? "signal" : "amber"}>

@@ -55,6 +55,7 @@ export interface Market {
   key: string;
   name: string;
   region: Region;
+  timezone: string; // IANA timezone for the metro
   lat: number;
   lng: number;
   teams: MarketTeam[];
@@ -72,6 +73,7 @@ export const MARKETS: Market[] = [
     key: "atlanta",
     name: "Atlanta, GA",
     region: "south",
+    timezone: "America/New_York",
     lat: 33.749,
     lng: -84.388,
     teams: [
@@ -87,6 +89,7 @@ export const MARKETS: Market[] = [
     key: "nashville",
     name: "Nashville, TN",
     region: "south",
+    timezone: "America/Chicago",
     lat: 36.162,
     lng: -86.781,
     teams: [
@@ -101,6 +104,7 @@ export const MARKETS: Market[] = [
     key: "charlotte",
     name: "Charlotte, NC",
     region: "south",
+    timezone: "America/New_York",
     lat: 35.227,
     lng: -80.843,
     teams: [
@@ -114,6 +118,7 @@ export const MARKETS: Market[] = [
     key: "new_york",
     name: "New York, NY",
     region: "northeast",
+    timezone: "America/New_York",
     lat: 40.713,
     lng: -74.006,
     teams: [
@@ -131,6 +136,7 @@ export const MARKETS: Market[] = [
     key: "boston",
     name: "Boston, MA",
     region: "northeast",
+    timezone: "America/New_York",
     lat: 42.36,
     lng: -71.058,
     teams: [
@@ -145,6 +151,7 @@ export const MARKETS: Market[] = [
     key: "philadelphia",
     name: "Philadelphia, PA",
     region: "northeast",
+    timezone: "America/New_York",
     lat: 39.953,
     lng: -75.165,
     teams: [
@@ -159,6 +166,7 @@ export const MARKETS: Market[] = [
     key: "washington_dc",
     name: "Washington, DC",
     region: "northeast",
+    timezone: "America/New_York",
     lat: 38.907,
     lng: -77.037,
     teams: [
@@ -173,6 +181,7 @@ export const MARKETS: Market[] = [
     key: "chicago",
     name: "Chicago, IL",
     region: "midwest",
+    timezone: "America/Chicago",
     lat: 41.878,
     lng: -87.629,
     teams: [
@@ -188,6 +197,7 @@ export const MARKETS: Market[] = [
     key: "detroit",
     name: "Detroit, MI",
     region: "midwest",
+    timezone: "America/New_York",
     lat: 42.331,
     lng: -83.046,
     teams: [
@@ -202,6 +212,7 @@ export const MARKETS: Market[] = [
     key: "minneapolis",
     name: "Minneapolis, MN",
     region: "midwest",
+    timezone: "America/Chicago",
     lat: 44.978,
     lng: -93.265,
     teams: [
@@ -216,6 +227,7 @@ export const MARKETS: Market[] = [
     key: "dallas",
     name: "Dallas, TX",
     region: "texas",
+    timezone: "America/Chicago",
     lat: 32.777,
     lng: -96.797,
     teams: [
@@ -231,6 +243,7 @@ export const MARKETS: Market[] = [
     key: "houston",
     name: "Houston, TX",
     region: "texas",
+    timezone: "America/Chicago",
     lat: 29.76,
     lng: -95.369,
     teams: [
@@ -244,6 +257,7 @@ export const MARKETS: Market[] = [
     key: "miami",
     name: "Miami, FL",
     region: "florida",
+    timezone: "America/New_York",
     lat: 25.761,
     lng: -80.192,
     teams: [
@@ -259,6 +273,7 @@ export const MARKETS: Market[] = [
     key: "tampa",
     name: "Tampa, FL",
     region: "florida",
+    timezone: "America/New_York",
     lat: 27.951,
     lng: -82.457,
     teams: [
@@ -271,6 +286,7 @@ export const MARKETS: Market[] = [
     key: "los_angeles",
     name: "Los Angeles, CA",
     region: "california",
+    timezone: "America/Los_Angeles",
     lat: 34.052,
     lng: -118.244,
     teams: [
@@ -288,6 +304,7 @@ export const MARKETS: Market[] = [
     key: "san_francisco",
     name: "San Francisco Bay Area, CA",
     region: "california",
+    timezone: "America/Los_Angeles",
     lat: 37.775,
     lng: -122.419,
     teams: [
@@ -301,6 +318,7 @@ export const MARKETS: Market[] = [
     key: "seattle",
     name: "Seattle, WA",
     region: "pacificnw",
+    timezone: "America/Los_Angeles",
     lat: 47.606,
     lng: -122.332,
     teams: [
@@ -315,6 +333,7 @@ export const MARKETS: Market[] = [
     key: "denver",
     name: "Denver, CO",
     region: "mountain",
+    timezone: "America/Denver",
     lat: 39.739,
     lng: -104.99,
     teams: [
@@ -329,6 +348,7 @@ export const MARKETS: Market[] = [
     key: "phoenix",
     name: "Phoenix, AZ",
     region: "southwest",
+    timezone: "America/Phoenix",
     lat: 33.448,
     lng: -112.074,
     teams: [
@@ -342,6 +362,7 @@ export const MARKETS: Market[] = [
     key: "las_vegas",
     name: "Las Vegas, NV",
     region: "west",
+    timezone: "America/Los_Angeles",
     lat: 36.17,
     lng: -115.139,
     teams: [

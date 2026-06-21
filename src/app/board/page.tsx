@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useState } from "react";
-import { useStore, todayISO, sortByTvOrder } from "@/lib/store";
+import { useStore, todayInZone, zoneLabel, sortByTvOrder } from "@/lib/store";
 import { AssignmentCard } from "@/components/AssignmentCard";
 import { SectionHeader, TVBadge, LabelChip, Pill } from "@/components/ui";
 import { deriveLabels } from "@/lib/constants";
@@ -35,15 +35,17 @@ const COLS = [
 export default function TodaysBoard() {
   const { activeBar, getBoard } = useStore();
   const [view, setView] = useState<"cards" | "table">("cards");
-  const today = todayISO();
+  const today = todayInZone(activeBar.timezone);
   const board = getBoard(today);
   const assignments = sortByTvOrder(board.assignments, activeBar.tvOrder);
   const confirmed = assignments.filter((a) => a.confirmed).length;
   const providerName = getProvider(activeBar.providerId)?.name ?? "Channel";
+  const tz = zoneLabel(activeBar.timezone);
 
   return (
     <div className="flex flex-col gap-6">
       <SectionHeader kicker={`${activeBar.name} · ${formatLong(today)}`} title="Today's GameBoard">
+        {tz && <Pill tone="neutral">All times {tz}</Pill>}
         <Pill tone={confirmed === assignments.length && assignments.length > 0 ? "signal" : "alert"}>
           {confirmed}/{assignments.length} confirmed
         </Pill>
@@ -88,7 +90,7 @@ export default function TodaysBoard() {
                     key={c}
                     className="whitespace-nowrap px-3 py-3 font-mono text-[10px] uppercase tracking-wider text-chalk-faint"
                   >
-                    {c === "DIRECTV" ? providerName : c}
+                    {c === "DIRECTV" ? providerName : c === "Start" && tz ? `Start · ${tz}` : c}
                   </th>
                 ))}
               </tr>

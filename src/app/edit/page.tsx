@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useState } from "react";
-import { useStore, todayISO, sortByTvOrder } from "@/lib/store";
+import { useStore, todayInZone, sortByTvOrder } from "@/lib/store";
 import { AssignmentEditor } from "@/components/AssignmentEditor";
 import { SectionHeader, TVBadge, Toggle } from "@/components/ui";
 import type { Assignment } from "@/lib/types";
@@ -34,7 +34,7 @@ export default function EditBoard() {
     clearBoard,
     newAssignmentId,
   } = useStore();
-  const today = todayISO();
+  const today = todayInZone(activeBar.timezone);
   const board = getBoard(today);
   const assignments = sortByTvOrder(board.assignments, activeBar.tvOrder);
 
