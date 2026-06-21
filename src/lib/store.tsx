@@ -18,7 +18,9 @@ import type {
 } from "./types";
 import { buildSeedState } from "./seed";
 
-const STORAGE_KEY = "gameboard-pro:v1";
+// Bump this when the seed shape/data changes so returning browsers re-seed
+// instead of showing a stale board from a previous version.
+const STORAGE_KEY = "gameboard-pro:v2";
 
 export function todayISO(): string {
   // Use local date so the "board day" matches the bar's day.
