@@ -1,0 +1,10 @@
+[build]
+  command = "npm run build"
+  publish = ".next"
+
+[build.environment]
+  NODE_VERSION = "22"
+
+# The official Next.js runtime handles SSR, image optimization, and routing.
+[[plugins]]
+  package = "@netlify/plugin-nextjs"
