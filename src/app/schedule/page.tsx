@@ -2,8 +2,8 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
-import { useStore, todayInZone, zoneLabel, sortByTvOrder } from "@/lib/store";
-import { SectionHeader, Pill, Toggle } from "@/components/ui";
+import { useStore, zoneLabel, sortByTvOrder } from "@/lib/store";
+import { SectionHeader, Pill, Toggle, DateStepper } from "@/components/ui";
 import type { ScheduleEvent, ScheduleResponse, EventState } from "@/lib/schedule/types";
 import { getMarket } from "@/lib/markets";
 import { channelFor, matchNetwork } from "@/lib/providers";
@@ -31,9 +31,9 @@ function StatusChip({ ev }: { ev: ScheduleEvent }) {
 }
 
 export default function FullSchedule() {
-  const { activeBar, getBoard, upsertAssignment, newAssignmentId } = useStore();
+  const { activeBar, getBoard, upsertAssignment, newAssignmentId, currentDate: today } =
+    useStore();
   const tz = activeBar.timezone;
-  const today = todayInZone(tz);
   const market = getMarket(activeBar.market);
 
   const [data, setData] = useState<ScheduleResponse | null>(null);
@@ -150,6 +150,7 @@ export default function FullSchedule() {
   return (
     <div className="flex flex-col gap-6">
       <SectionHeader kicker={`${activeBar.name} · ${today}`} title="Full Schedule">
+        <DateStepper />
         {data && (
           <Pill tone={data.source === "live" ? "signal" : "amber"}>
             {data.source === "live" ? "● Live feed" : "○ Scheduled (offline)"}

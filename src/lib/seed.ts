@@ -37,6 +37,10 @@ function barWallPlaceholder(label: string): string {
 
 const TV_ORDER = [3, 4, 9, 5, 6, 7, 8];
 
+/** The demo slate is pinned to this date (the seeded games are real for it).
+ *  Other dates start empty and are built from the live schedule. */
+export const DEMO_DATE = "2026-06-21";
+
 const TV_DESCRIPTIONS: Record<number, string> = {
   3: "Far left / left bar TV",
   4: "Left-center TV",
@@ -347,13 +351,14 @@ function buildBoard(date: string): DailyBoard {
   };
 }
 
-export function buildSeedState(today: string): AppState {
+export function buildSeedState(): AppState {
   const bar = buildBar();
   return {
     activeBarId: bar.id,
     bars: [bar],
     boards: {
-      [bar.id]: [buildBoard(today)],
+      // Seed the demo board under its real date, not "today".
+      [bar.id]: [buildBoard(DEMO_DATE)],
     },
   };
 }

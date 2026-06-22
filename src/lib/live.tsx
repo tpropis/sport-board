@@ -10,7 +10,7 @@ import {
   useState,
 } from "react";
 import type { ScheduleEvent, ScheduleResponse } from "./schedule/types";
-import { useStore, todayInZone } from "./store";
+import { useStore } from "./store";
 
 interface LiveValue {
   source: "live" | "seed" | null;
@@ -32,8 +32,7 @@ function norm(s: string): string {
 /** Fetches today's schedule once (and polls) so the board/staff can show live
  *  status without every card fetching on its own. */
 export function LiveScheduleProvider({ children }: { children: React.ReactNode }) {
-  const { activeBar } = useStore();
-  const today = todayInZone(activeBar.timezone);
+  const { currentDate: today } = useStore();
   const [data, setData] = useState<ScheduleResponse | null>(null);
   const timer = useRef<ReturnType<typeof setInterval> | null>(null);
 

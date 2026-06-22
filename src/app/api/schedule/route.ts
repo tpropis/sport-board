@@ -5,7 +5,8 @@ import {
   type ScheduleEvent,
   type ScheduleResponse,
 } from "@/lib/schedule/types";
-import { seedSchedule } from "@/lib/schedule/seed";
+import { seedSchedule, DEMO_DATE } from "@/lib/schedule/seed";
+import { worldCupForDate } from "@/lib/schedule/worldcup";
 
 // Always fresh — this is the live surface.
 export const dynamic = "force-dynamic";
@@ -51,7 +52,13 @@ export async function GET(req: Request) {
   const live = results.flatMap((r) => (r.status === "fulfilled" ? r.value : []));
 
   const useLive = live.length > 0;
-  const events = useLive ? live : seedSchedule(date);
+  // Fallback: the full demo slate for the demo date, plus World Cup fixtures
+  // for any other date so the calendar is never empty during the tournament.
+  const fallback =
+    date === DEMO_DATE
+      ? seedSchedule(date)
+      : [...seedSchedule(date), ...worldCupForDate(date)];
+  const events = useLive ? live : fallback;
 
   // Sort: live & delayed first, then upcoming by time, then finals.
   const rank = (s: string) =>

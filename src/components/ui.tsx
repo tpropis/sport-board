@@ -2,6 +2,60 @@
 
 import type { AssignmentLabel } from "@/lib/types";
 import { LABEL_STYLES } from "@/lib/constants";
+import { useStore } from "@/lib/store";
+
+function fmtStepper(iso: string): string {
+  const [y, m, d] = iso.split("-").map(Number);
+  return new Date(y, m - 1, d).toLocaleDateString("en-US", {
+    weekday: "short",
+    month: "short",
+    day: "numeric",
+  });
+}
+
+/** Day navigator wired to the store's selected date. */
+export function DateStepper() {
+  const { currentDate, isToday, setSelectedDate } = useStore();
+
+  function shift(days: number) {
+    const [y, m, d] = currentDate.split("-").map(Number);
+    const next = new Date(y, m - 1, d + days);
+    const iso = `${next.getFullYear()}-${String(next.getMonth() + 1).padStart(2, "0")}-${String(
+      next.getDate(),
+    ).padStart(2, "0")}`;
+    setSelectedDate(iso);
+  }
+
+  return (
+    <div className="flex items-center gap-1 rounded-md border border-ink-600 bg-ink-800 p-1">
+      <button
+        onClick={() => shift(-1)}
+        className="rounded px-2 py-1 text-chalk-dim hover:bg-ink-700 hover:text-chalk"
+        aria-label="Previous day"
+      >
+        ◀
+      </button>
+      <span className="tnum min-w-[110px] text-center text-sm font-semibold text-chalk">
+        {fmtStepper(currentDate)}
+      </span>
+      <button
+        onClick={() => shift(1)}
+        className="rounded px-2 py-1 text-chalk-dim hover:bg-ink-700 hover:text-chalk"
+        aria-label="Next day"
+      >
+        ▶
+      </button>
+      {!isToday && (
+        <button
+          onClick={() => setSelectedDate(null)}
+          className="ml-1 rounded bg-amber-accent/15 px-2 py-1 text-xs font-semibold text-amber-glow hover:bg-amber-accent/25"
+        >
+          Today
+        </button>
+      )}
+    </div>
+  );
+}
 
 export function LabelChip({ label }: { label: AssignmentLabel }) {
   return (

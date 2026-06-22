@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useStore, todayInZone, zoneLabel, sortByTvOrder } from "@/lib/store";
+import { useStore, zoneLabel, sortByTvOrder } from "@/lib/store";
 import { LayoutViewer } from "@/components/PhotoMapper";
 import { TVBadge, Pill } from "@/components/ui";
 
@@ -16,8 +16,7 @@ function formatLong(iso: string): string {
 }
 
 export default function CommandCenter() {
-  const { activeBar, getBoard } = useStore();
-  const today = todayInZone(activeBar.timezone);
+  const { activeBar, getBoard, currentDate: today } = useStore();
   const board = getBoard(today);
   const assignments = sortByTvOrder(board.assignments, activeBar.tvOrder);
   const confirmed = assignments.filter((a) => a.confirmed).length;

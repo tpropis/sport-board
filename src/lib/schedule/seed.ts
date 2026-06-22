@@ -1,5 +1,8 @@
 import type { ScheduleEvent, EventStatus } from "./types";
 
+/** The demo slate is pinned to this date. */
+export const DEMO_DATE = "2026-06-21";
+
 /** Build an ISO instant from a June 21, 2026 Eastern (EDT, -04:00) wall time. */
 function et(time24: string): string {
   return `2026-06-21T${time24}:00-04:00`;
@@ -45,7 +48,7 @@ function mk(
  * In Progress, Rain Delay, Scheduled).
  */
 export function seedSchedule(date: string): ScheduleEvent[] {
-  if (date !== "2026-06-21") return [];
+  if (date !== DEMO_DATE) return [];
 
   return [
     // ---- FIFA World Cup (all on FOX / FS1) ----

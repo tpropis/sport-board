@@ -5,6 +5,18 @@ import { usePathname } from "next/navigation";
 import { useState } from "react";
 import { useStore } from "@/lib/store";
 import { Toggle } from "./ui";
+import { AuthButton, useIsManager, CLERK_ENABLED } from "@/lib/auth";
+
+// Routes that require manager access (editing & configuration).
+const MANAGER_ROUTES = [
+  "/edit",
+  "/setup",
+  "/services",
+  "/priority",
+  "/sound",
+  "/tv-layout",
+  "/channels",
+];
 
 const NAV: { href: string; label: string; group: string }[] = [
   { href: "/", label: "Command Center", group: "Operate" },
@@ -72,11 +84,14 @@ function BarSelector() {
 export function AppShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const { managerMode, setManagerMode, ready } = useStore();
+  const isManager = useIsManager();
   const [mobileOpen, setMobileOpen] = useState(false);
 
   if (BARE_ROUTES.includes(pathname)) {
     return <>{children}</>;
   }
+
+  const locked = MANAGER_ROUTES.includes(pathname) && !isManager;
 
   const groups = Array.from(new Set(NAV.map((n) => n.group)));
 
@@ -143,25 +158,47 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             </div>
           </div>
           <div className="flex items-center gap-3">
-            <div className="hidden items-center gap-2 sm:flex">
-              <span className="field-label">
-                {managerMode ? "Manager" : "Staff"} mode
-              </span>
-              <Toggle
-                checked={managerMode}
-                onChange={setManagerMode}
-                label="Manager mode"
-              />
-            </div>
+            {CLERK_ENABLED ? (
+              <AuthButton />
+            ) : (
+              <div className="hidden items-center gap-2 sm:flex">
+                <span className="field-label">
+                  {managerMode ? "Manager" : "Staff"} mode
+                </span>
+                <Toggle
+                  checked={managerMode}
+                  onChange={setManagerMode}
+                  label="Manager mode"
+                />
+              </div>
+            )}
           </div>
         </header>
 
         <main className="flex-1 px-4 py-6 sm:px-6 lg:px-8">
           <div className="mx-auto w-full max-w-7xl">
-            {ready ? children : <BootSkeleton />}
+            {!ready ? <BootSkeleton /> : locked ? <ManagerGate /> : children}
           </div>
         </main>
       </div>
+    </div>
+  );
+}
+
+function ManagerGate() {
+  return (
+    <div className="flex min-h-[60vh] flex-col items-center justify-center gap-4 text-center">
+      <div className="flex h-12 w-12 items-center justify-center rounded-lg border border-amber-accent/50 bg-amber-accent/10 text-2xl">
+        🔒
+      </div>
+      <div>
+        <h2 className="font-display text-xl font-bold text-chalk">Manager access required</h2>
+        <p className="mt-1 max-w-sm text-sm text-chalk-dim">
+          Editing and configuration are locked to managers. Sign in to continue —
+          the staff board and print sheet stay open to everyone.
+        </p>
+      </div>
+      <AuthButton />
     </div>
   );
 }

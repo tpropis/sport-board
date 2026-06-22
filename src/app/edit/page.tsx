@@ -2,9 +2,9 @@
 
 import Link from "next/link";
 import { useState } from "react";
-import { useStore, todayInZone, sortByTvOrder } from "@/lib/store";
+import { useStore, sortByTvOrder } from "@/lib/store";
 import { AssignmentEditor } from "@/components/AssignmentEditor";
-import { SectionHeader, TVBadge, Toggle } from "@/components/ui";
+import { SectionHeader, TVBadge, Toggle, DateStepper } from "@/components/ui";
 import type { Assignment } from "@/lib/types";
 import { autoPrioritize, scoreEvent } from "@/lib/priority";
 import { getMarket } from "@/lib/markets";
@@ -33,8 +33,8 @@ export default function EditBoard() {
     duplicateYesterday,
     clearBoard,
     newAssignmentId,
+    currentDate: today,
   } = useStore();
-  const today = todayInZone(activeBar.timezone);
   const board = getBoard(today);
   const assignments = sortByTvOrder(board.assignments, activeBar.tvOrder);
 
@@ -66,7 +66,8 @@ export default function EditBoard() {
 
   return (
     <div className="flex flex-col gap-6">
-      <SectionHeader kicker={`${activeBar.name} · Draft for ${today}`} title="Edit Board">
+      <SectionHeader kicker={`${activeBar.name} · ${today}`} title="Edit Board">
+        <DateStepper />
         <button onClick={startNew} className="btn btn-primary">
           + Add game / event
         </button>

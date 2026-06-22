@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useState } from "react";
-import { useStore, todayInZone, zoneLabel, sortByTvOrder } from "@/lib/store";
+import { useStore, zoneLabel, sortByTvOrder } from "@/lib/store";
 import { AssignmentCard } from "@/components/AssignmentCard";
 import { LayoutViewer } from "@/components/PhotoMapper";
 import { TVBadge } from "@/components/ui";
@@ -26,8 +26,7 @@ export default function StaffViewPage() {
 }
 
 function StaffView() {
-  const { activeBar, getBoard, ready } = useStore();
-  const today = todayInZone(activeBar.timezone);
+  const { activeBar, getBoard, ready, currentDate: today } = useStore();
   const board = getBoard(today);
   const assignments = sortByTvOrder(board.assignments, activeBar.tvOrder);
   const tz = zoneLabel(activeBar.timezone);

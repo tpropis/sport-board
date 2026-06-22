@@ -20,7 +20,7 @@ import { buildSeedState } from "./seed";
 
 // Bump this when the seed shape/data changes so returning browsers re-seed
 // instead of showing a stale board from a previous version.
-const STORAGE_KEY = "gameboard-pro:v5";
+const STORAGE_KEY = "gameboard-pro:v6";
 
 export function todayISO(): string {
   // Use local date so the "board day" matches the bar's day.
@@ -96,6 +96,10 @@ interface StoreContextValue {
   activeBar: Bar;
   managerMode: boolean;
   setManagerMode: (on: boolean) => void;
+  // Date navigation
+  currentDate: string;
+  isToday: boolean;
+  setSelectedDate: (date: string | null) => void;
   setActiveBar: (id: string) => void;
   updateBar: (patch: Partial<Bar>) => void;
   // Boards
@@ -117,9 +121,10 @@ interface StoreContextValue {
 const StoreContext = createContext<StoreContextValue | null>(null);
 
 export function StoreProvider({ children }: { children: React.ReactNode }) {
-  const [state, setState] = useState<AppState>(() => buildSeedState(todayInZone("America/New_York")));
+  const [state, setState] = useState<AppState>(() => buildSeedState());
   const [ready, setReady] = useState(false);
   const [managerMode, setManagerMode] = useState(true);
+  const [selectedDate, setSelectedDate] = useState<string | null>(null);
 
   // Hydrate from localStorage after mount (avoids SSR mismatch).
   useEffect(() => {
@@ -152,6 +157,21 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
     () => state.bars.find((b) => b.id === state.activeBarId) ?? state.bars[0],
     [state],
   );
+
+  // The date being viewed/edited. Defaults to today; if today has no board,
+  // open on the most recent populated board (so the app never looks empty).
+  const todayStr = todayInZone(activeBar?.timezone);
+  const currentDate = useMemo(() => {
+    if (selectedDate) return selectedDate;
+    const list = state.boards[state.activeBarId] ?? [];
+    if (list.some((b) => b.date === todayStr)) return todayStr;
+    const populated = list
+      .filter((b) => b.assignments.length > 0)
+      .map((b) => b.date)
+      .sort();
+    return populated.length ? populated[populated.length - 1] : todayStr;
+  }, [selectedDate, state, todayStr]);
+  const isToday = currentDate === todayStr;
 
   const setActiveBar = useCallback((id: string) => {
     setState((s) => ({ ...s, activeBarId: id }));
@@ -316,7 +336,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
   );
 
   const resetAll = useCallback(() => {
-    const fresh = buildSeedState(todayInZone("America/New_York"));
+    const fresh = buildSeedState();
     setState(fresh);
   }, []);
 
@@ -326,6 +346,9 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
     activeBar,
     managerMode,
     setManagerMode,
+    currentDate,
+    isToday,
+    setSelectedDate,
     setActiveBar,
     updateBar,
     getBoard,

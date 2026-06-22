@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useStore, todayInZone, zoneLabel, sortByTvOrder } from "@/lib/store";
+import { useStore, zoneLabel, sortByTvOrder } from "@/lib/store";
 import { getProvider } from "@/lib/providers";
 
 function formatLong(iso: string): string {
@@ -15,8 +15,7 @@ function formatLong(iso: string): string {
 }
 
 export default function PrintView() {
-  const { activeBar, getBoard } = useStore();
-  const today = todayInZone(activeBar.timezone);
+  const { activeBar, getBoard, currentDate: today } = useStore();
   const board = getBoard(today);
   const assignments = sortByTvOrder(board.assignments, activeBar.tvOrder);
   const mainPhoto = activeBar.layoutPhotos.find((p) => p.markers.length > 0);

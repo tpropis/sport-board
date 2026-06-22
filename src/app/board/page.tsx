@@ -2,11 +2,11 @@
 
 import Link from "next/link";
 import { useState } from "react";
-import { useStore, todayInZone, zoneLabel, sortByTvOrder } from "@/lib/store";
+import { useStore, zoneLabel, sortByTvOrder } from "@/lib/store";
 import { AssignmentCard } from "@/components/AssignmentCard";
-import { SectionHeader, TVBadge, LabelChip, Pill } from "@/components/ui";
+import { SectionHeader, TVBadge, LabelChip, Pill, DateStepper } from "@/components/ui";
 import { deriveLabels } from "@/lib/constants";
-import { getProvider } from "@/lib/providers";
+import { getProvider, channelFor, matchNetwork } from "@/lib/providers";
 import { LiveScheduleProvider, useLive } from "@/lib/live";
 import type { Assignment } from "@/lib/types";
 import { scoreEvent } from "@/lib/priority";
@@ -45,9 +45,8 @@ export default function TodaysBoardPage() {
 }
 
 function TodaysBoard() {
-  const { activeBar, getBoard } = useStore();
+  const { activeBar, getBoard, currentDate: today } = useStore();
   const [view, setView] = useState<"cards" | "table">("cards");
-  const today = todayInZone(activeBar.timezone);
   const board = getBoard(today);
   const assignments = sortByTvOrder(board.assignments, activeBar.tvOrder);
   const confirmed = assignments.filter((a) => a.confirmed).length;
@@ -57,6 +56,7 @@ function TodaysBoard() {
   return (
     <div className="flex flex-col gap-6">
       <SectionHeader kicker={`${activeBar.name} · ${formatLong(today)}`} title="Today's GameBoard">
+        <DateStepper />
         {tz && <Pill tone="neutral">All times {tz}</Pill>}
         <Pill tone={confirmed === assignments.length && assignments.length > 0 ? "signal" : "alert"}>
           {confirmed}/{assignments.length} confirmed
@@ -178,7 +178,7 @@ function TodaysBoard() {
 }
 
 function BoardLiveAlerts({ assignments }: { assignments: Assignment[] }) {
-  const { activeBar } = useStore();
+  const { activeBar, currentDate, upsertAssignment } = useStore();
   const live = useLive();
   if (!live) return null;
 
@@ -189,43 +189,90 @@ function BoardLiveAlerts({ assignments }: { assignments: Assignment[] }) {
 
   if (disrupted.length === 0) return null;
 
-  // Suggest the best available game not already on the board to swap in.
+  const fmtTime = (iso: string) => {
+    try {
+      return new Intl.DateTimeFormat("en-US", {
+        timeZone: activeBar.timezone,
+        hour: "numeric",
+        minute: "2-digit",
+      }).format(new Date(iso));
+    } catch {
+      return "";
+    }
+  };
+
+  // Rank available games (not already on the board) by crowd draw.
   const onBoard = new Set(assignments.map((a) => a.eventName.toLowerCase()));
-  const candidate = live.all
+  const candidates = live.all
     .filter(
       (e) =>
         !onBoard.has(e.name.toLowerCase()) &&
         (e.status.state === "in" || e.status.state === "pre"),
     )
-    .map((e) => ({ e, s: scoreEvent({ ...blankFromEvent(e) }, market).score }))
-    .sort((x, y) => y.s - x.s)[0]?.e;
+    .map((e) => ({ e, s: scoreEvent(blankFromEvent(e), market).score }))
+    .sort((x, y) => y.s - x.s)
+    .map((x) => x.e);
+
+  function swap(a: Assignment, cand: (typeof candidates)[number]) {
+    const network = cand.networks[0];
+    const streaming = cand.networks.find((n) => /app|\+|peacock|season pass|max|tv$/i.test(n));
+    const ch = channelFor(matchNetwork(network) ?? "", activeBar.providerId);
+    upsertAssignment(currentDate, {
+      ...a, // keep id, tvNumber, device/remote, sound, confirmed reset below
+      eventId: cand.id,
+      eventName: cand.name,
+      team1: cand.team1,
+      team2: cand.team2,
+      sport: cand.sport,
+      league: cand.league,
+      startTime: fmtTime(cand.startUtc),
+      watchOn: network,
+      directvChannel: ch,
+      streamingApp: streaming,
+      labels: cand.local ? ["LOCAL"] : [],
+      notes: [cand.venue, cand.city].filter(Boolean).join(" · ") || undefined,
+      confirmed: false,
+    });
+  }
 
   return (
     <div className="rounded-lg border border-amber-accent/50 bg-amber-accent/10 p-4">
-      <div className="mb-2 flex items-center gap-2 font-display font-bold text-amber-glow">
+      <div className="mb-3 flex items-center gap-2 font-display font-bold text-amber-glow">
         ⚠ Live disruption — {disrupted.length} TV{disrupted.length > 1 ? "s" : ""} need a look
       </div>
-      <ul className="flex flex-col gap-1.5 text-sm text-chalk-dim">
-        {disrupted.map(({ a, ev }) => (
-          <li key={a.id} className="flex flex-wrap items-center gap-2">
-            <span className="font-semibold text-chalk">TV {a.tvNumber}</span>
-            <span>{a.eventName}</span>
-            <span className="label-chip border-amber-accent/50 bg-amber-accent/15 text-amber-glow">
-              {ev!.status.detail}
-            </span>
-          </li>
-        ))}
+      <ul className="flex flex-col gap-2 text-sm">
+        {disrupted.map(({ a, ev }, i) => {
+          const cand = candidates[i] ?? candidates[0];
+          return (
+            <li
+              key={a.id}
+              className="flex flex-wrap items-center gap-2 rounded-md border border-ink-700 bg-ink-900/50 px-3 py-2"
+            >
+              <span className="font-semibold text-chalk">TV {a.tvNumber}</span>
+              <span className="text-chalk-dim">{a.eventName}</span>
+              <span className="label-chip border-amber-accent/50 bg-amber-accent/15 text-amber-glow">
+                {ev!.status.detail}
+              </span>
+              {cand && (
+                <button
+                  onClick={() => swap(a, cand)}
+                  className="btn btn-signal ml-auto px-3 py-1 text-xs"
+                  title={`${cand.name}${cand.networks[0] ? ` · ${cand.networks[0]}` : ""}`}
+                >
+                  ⇄ Swap to {cand.team1 ?? cand.name}
+                  {cand.networks[0] ? ` (${cand.networks[0]})` : ""}
+                </button>
+              )}
+            </li>
+          );
+        })}
       </ul>
-      {candidate && (
-        <p className="mt-3 text-sm text-chalk-dim">
-          Best available swap right now:{" "}
-          <span className="font-semibold text-chalk">{candidate.name}</span>
-          {candidate.networks[0] ? ` · ${candidate.networks[0]}` : ""} —{" "}
-          <Link href="/schedule" className="text-amber-glow hover:underline">
-            open Full Schedule
-          </Link>
-        </p>
-      )}
+      <p className="mt-3 text-xs text-chalk-faint">
+        Swap drops the best available game onto that TV and re-ranks the board ·{" "}
+        <Link href="/schedule" className="text-amber-glow hover:underline">
+          browse the full schedule
+        </Link>
+      </p>
     </div>
   );
 }
