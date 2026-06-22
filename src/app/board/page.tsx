@@ -216,7 +216,11 @@ function BoardLiveAlerts({ assignments }: { assignments: Assignment[] }) {
   function swap(a: Assignment, cand: (typeof candidates)[number]) {
     const network = cand.networks[0];
     const streaming = cand.networks.find((n) => /app|\+|peacock|season pass|max|tv$/i.test(n));
-    const ch = channelFor(matchNetwork(network) ?? "", activeBar.providerId);
+    const ch = channelFor(
+      matchNetwork(network) ?? "",
+      activeBar.providerId,
+      activeBar.channelOverrides?.[activeBar.providerId ?? ""],
+    );
     upsertAssignment(currentDate, {
       ...a, // keep id, tvNumber, device/remote, sound, confirmed reset below
       eventId: cand.id,

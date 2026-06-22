@@ -12,14 +12,28 @@ import {
 } from "@/lib/providers";
 
 export default function ChannelGuide() {
-  const { activeBar } = useStore();
+  const { activeBar, updateBar } = useStore();
   const [providerId, setProviderId] = useState(activeBar.providerId ?? "directv");
   const provider = getProvider(providerId);
   const [q, setQ] = useState("");
 
+  const overrides = activeBar.channelOverrides?.[providerId] ?? {};
+
+  function setChannel(network: string, value: string) {
+    const all = { ...(activeBar.channelOverrides ?? {}) };
+    const forProvider = { ...(all[providerId] ?? {}) };
+    if (value.trim()) forProvider[network] = value.trim();
+    else delete forProvider[network];
+    all[providerId] = forProvider;
+    updateBar({ channelOverrides: all });
+  }
+
   const rows = NETWORKS.filter((n) =>
     n.toLowerCase().includes(q.trim().toLowerCase()),
   );
+
+  const confirmedCount = Object.keys(overrides).length;
+  const seededCount = NETWORKS.filter((n) => CHANNEL_LINEUP[n]?.[providerId]).length;
 
   return (
     <div className="flex flex-col gap-6">
@@ -33,9 +47,10 @@ export default function ChannelGuide() {
 
       <p className="max-w-3xl text-sm text-chalk-dim">
         The channel number for every network on your provider, so a bartender can
-        always find the game. Pick a network on the board and the channel auto-fills
-        from here. Switch providers to compare — the same network lives on a
-        different number for each one.
+        always find the game — and the board auto-fills it. Satellite numbers
+        (DIRECTV / DISH) are national. <strong className="text-chalk">Cable numbers
+        vary by market</strong>, so confirm yours once here and they&apos;re locked
+        in for this bar everywhere.
       </p>
 
       <div className="panel flex flex-wrap items-center gap-3 p-4">
@@ -59,8 +74,10 @@ export default function ChannelGuide() {
           value={q}
           onChange={(e) => setQ(e.target.value)}
         />
-        {provider?.note && (
-          <span className="text-xs text-chalk-faint">{provider.note}</span>
+        {provider?.type !== "streaming" && (
+          <span className="text-xs text-chalk-faint">
+            {seededCount} seeded · {confirmedCount} confirmed by you
+          </span>
         )}
       </div>
 
@@ -84,18 +101,19 @@ export default function ChannelGuide() {
         </div>
       ) : (
         <div className="panel overflow-hidden">
-          <div className="grid grid-cols-[1fr_auto] gap-2 border-b border-ink-600 px-4 py-2.5 font-mono text-[10px] uppercase tracking-wider text-chalk-faint">
+          <div className="grid grid-cols-[1fr_140px] gap-2 border-b border-ink-600 px-4 py-2.5 font-mono text-[10px] uppercase tracking-wider text-chalk-faint">
             <span>Network</span>
-            <span>Channel</span>
+            <span>Channel #</span>
           </div>
           <div className="divide-y divide-ink-700/60">
             {rows.map((n) => {
-              const num = CHANNEL_LINEUP[n]?.[providerId];
+              const seeded = CHANNEL_LINEUP[n]?.[providerId];
+              const override = overrides[n];
               const isLocal = LOCAL_NETWORKS.has(n);
               return (
                 <div
                   key={n}
-                  className="grid grid-cols-[1fr_auto] items-center gap-2 px-4 py-2.5"
+                  className="grid grid-cols-[1fr_140px] items-center gap-2 px-4 py-2"
                 >
                   <span className="flex items-center gap-2 font-medium text-chalk">
                     {n}
@@ -104,16 +122,21 @@ export default function ChannelGuide() {
                         local
                       </span>
                     )}
+                    {override && (
+                      <span
+                        className="rounded border border-signal/40 bg-signal/10 px-1.5 py-0.5 text-[9px] uppercase tracking-wider text-signal"
+                        title="Confirmed by you"
+                      >
+                        ✓ yours
+                      </span>
+                    )}
                   </span>
-                  {num ? (
-                    <span className="tnum rounded-md border border-amber-accent/40 bg-amber-accent/10 px-3 py-1 font-mono text-base font-bold text-amber-glow">
-                      {num}
-                    </span>
-                  ) : (
-                    <span className="tnum px-3 py-1 font-mono text-sm text-chalk-faint">
-                      {isLocal ? "local affiliate" : "—"}
-                    </span>
-                  )}
+                  <input
+                    className="input tnum px-2 py-1 text-center font-mono"
+                    value={override ?? ""}
+                    placeholder={seeded ?? (isLocal ? "local #" : "set #")}
+                    onChange={(e) => setChannel(n, e.target.value)}
+                  />
                 </div>
               );
             })}
@@ -122,10 +145,10 @@ export default function ChannelGuide() {
       )}
 
       <p className="text-xs text-chalk-faint">
-        Satellite (DIRECTV / DISH) numbers are national. Cable numbers vary by
-        region — confirm against your box and edit as needed. Broadcast locals
-        (FOX / NBC / ABC / CBS / CW) follow your market&apos;s affiliate; Atlanta
-        numbers are shown.
+        Type a number to confirm it for this bar (overrides the seeded value and
+        wins everywhere). Clear it to fall back to the seeded number. Satellite
+        seeds are national; cable seeds are a starting point — verify against your
+        box.
       </p>
     </div>
   );

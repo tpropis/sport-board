@@ -120,7 +120,11 @@ export default function FullSchedule() {
     const tv = activeBar.tvOrder.find((n) => !used.has(n)) ?? activeBar.tvOrder[0];
     const network = ev.networks[0];
     const streaming = ev.networks.find((n) => /app|\+|peacock|stream|season pass|max|tv$/i.test(n));
-    const ch = channelFor(matchNetwork(network) ?? "", activeBar.providerId);
+    const ch = channelFor(
+      matchNetwork(network) ?? "",
+      activeBar.providerId,
+      activeBar.channelOverrides?.[activeBar.providerId ?? ""],
+    );
     const a: Assignment = {
       id: newAssignmentId(),
       tvNumber: tv,

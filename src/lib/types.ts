@@ -138,6 +138,9 @@ export interface Bar {
   lng?: number;
   defaultProvider: string;
   providerId?: string; // TV provider id (see lib/providers) — drives channel #s
+  // Per-bar channel number overrides: providerId -> network -> number. Lets each
+  // bar confirm its real lineup (cable numbers vary by market).
+  channelOverrides?: Record<string, Record<string, string>>;
   defaultSoundRule: SoundRuleValue;
   staffViewEnabled: boolean;
   setupNotes: string;

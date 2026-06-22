@@ -86,7 +86,7 @@ type Lineup = Record<string, string>;
 
 /** network -> { providerId -> channel number }. Empty/missing = unknown. */
 export const CHANNEL_LINEUP: Record<string, Lineup> = {
-  ESPN: { directv: "206", dish: "140" },
+  ESPN: { directv: "206", dish: "140", fios: "570" },
   ESPN2: { directv: "209", dish: "143" },
   ESPNU: { directv: "208", dish: "141" },
   ESPNews: { directv: "207", dish: "142" },
@@ -101,16 +101,16 @@ export const CHANNEL_LINEUP: Record<string, Lineup> = {
   ABC: { directv: "2", dish: "2" },
   CBS: { directv: "46", dish: "46" },
   CW: { directv: "69", dish: "69" },
-  TNT: { directv: "245", dish: "138" },
-  TBS: { directv: "247", dish: "139" },
+  TNT: { directv: "245", dish: "138", fios: "551" },
+  TBS: { directv: "247", dish: "139", fios: "552" },
   truTV: { directv: "246", dish: "242" },
-  "USA Network": { directv: "242", dish: "105" },
+  "USA Network": { directv: "242", dish: "105", fios: "550" },
   "NBA TV": { directv: "216", dish: "156" },
   "MLB Network": { directv: "213", dish: "152" },
   "NFL Network": { directv: "212", dish: "154" },
   "NFL RedZone": { directv: "703", dish: "155" },
   "NHL Network": { directv: "215", dish: "157" },
-  "Golf Channel": { directv: "218", dish: "401" },
+  "Golf Channel": { directv: "218", dish: "401", fios: "593" },
   "CBS Sports Network": { directv: "221", dish: "158" },
   "Tennis Channel": { directv: "217", dish: "400" },
   // Braves / Hawks regional sports network (formerly Bally Sports Southeast).
@@ -123,11 +123,24 @@ export function getProvider(id?: string): Provider | undefined {
   return PROVIDERS.find((p) => p.id === id);
 }
 
-/** The channel number for a network on a given provider, if known. */
-export function channelFor(network: string, providerId?: string): string | undefined {
+/** The channel number for a network on a provider. A per-bar override (the
+ *  manager's confirmed number for their market) always wins over the seed. */
+export function channelFor(
+  network: string,
+  providerId?: string,
+  overrides?: Record<string, string>,
+): string | undefined {
   if (!providerId) return undefined;
+  const o = overrides?.[network];
+  if (o && o.length > 0) return o;
   const n = CHANNEL_LINEUP[network]?.[providerId];
   return n && n.length > 0 ? n : undefined;
+}
+
+/** True when a provider's numbers are nationally consistent (satellite). */
+export function isNationalProvider(providerId?: string): boolean {
+  const p = getProvider(providerId);
+  return p?.type === "satellite";
 }
 
 /** Fuzzy-match a free-text "Watch On" value to a known linear network name. */

@@ -66,17 +66,19 @@ export function AssignmentEditor({
   const tvOptions = activeBar.tvOrder;
   const provider = getProvider(activeBar.providerId);
 
+  const chOverrides = activeBar.channelOverrides?.[activeBar.providerId ?? ""];
+
   // Picking a known network auto-fills the channel number for the bar's provider.
   function setWatchOn(value: string) {
     const net = matchNetwork(value);
-    const ch = channelFor(net ?? "", activeBar.providerId);
+    const ch = channelFor(net ?? "", activeBar.providerId, chOverrides);
     setA((prev) => ({
       ...prev,
       watchOn: value,
       ...(ch ? { directvChannel: ch } : {}),
     }));
   }
-  const suggestedChannel = channelFor(matchNetwork(a.watchOn) ?? "", activeBar.providerId);
+  const suggestedChannel = channelFor(matchNetwork(a.watchOn) ?? "", activeBar.providerId, chOverrides);
 
   return (
     <div className="flex max-h-[88vh] flex-col">
