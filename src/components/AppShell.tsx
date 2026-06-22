@@ -6,6 +6,8 @@ import { useState } from "react";
 import { useStore } from "@/lib/store";
 import { Toggle } from "./ui";
 import { AuthButton, useIsManager, CLERK_ENABLED } from "@/lib/auth";
+import { LiveScheduleProvider } from "@/lib/live";
+import { AutoBuilder } from "./AutoBuilder";
 
 // Routes that require manager access (editing & configuration).
 const MANAGER_ROUTES = [
@@ -177,7 +179,16 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
         <main className="flex-1 px-4 py-6 sm:px-6 lg:px-8">
           <div className="mx-auto w-full max-w-7xl">
-            {!ready ? <BootSkeleton /> : locked ? <ManagerGate /> : children}
+            {!ready ? (
+              <BootSkeleton />
+            ) : locked ? (
+              <ManagerGate />
+            ) : (
+              <LiveScheduleProvider>
+                <AutoBuilder />
+                {children}
+              </LiveScheduleProvider>
+            )}
           </div>
         </main>
       </div>

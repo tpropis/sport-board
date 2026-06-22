@@ -3,11 +3,12 @@
 import Link from "next/link";
 import { useState } from "react";
 import { useStore, zoneLabel, sortByTvOrder } from "@/lib/store";
+import { autoBuildAssignments } from "@/lib/autobuild";
 import { AssignmentCard } from "@/components/AssignmentCard";
 import { SectionHeader, TVBadge, LabelChip, Pill, DateStepper } from "@/components/ui";
 import { deriveLabels } from "@/lib/constants";
 import { getProvider, channelFor, matchNetwork } from "@/lib/providers";
-import { LiveScheduleProvider, useLive } from "@/lib/live";
+import { useLive } from "@/lib/live";
 import type { Assignment } from "@/lib/types";
 import { scoreEvent } from "@/lib/priority";
 import { getMarket } from "@/lib/markets";
@@ -36,22 +37,41 @@ const COLS = [
   "✓",
 ];
 
-export default function TodaysBoardPage() {
-  return (
-    <LiveScheduleProvider>
-      <TodaysBoard />
-    </LiveScheduleProvider>
-  );
-}
-
-function TodaysBoard() {
-  const { activeBar, getBoard, currentDate: today } = useStore();
+export default function TodaysBoard() {
+  const { activeBar, getBoard, saveBoard, newAssignmentId, currentDate: today } =
+    useStore();
   const [view, setView] = useState<"cards" | "table">("cards");
+  const live = useLive();
   const board = getBoard(today);
   const assignments = sortByTvOrder(board.assignments, activeBar.tvOrder);
   const confirmed = assignments.filter((a) => a.confirmed).length;
   const providerName = getProvider(activeBar.providerId)?.name ?? "Channel";
   const tz = zoneLabel(activeBar.timezone);
+
+  const fmtTime = (iso: string) => {
+    try {
+      return new Intl.DateTimeFormat("en-US", {
+        timeZone: activeBar.timezone,
+        hour: "numeric",
+        minute: "2-digit",
+      }).format(new Date(iso));
+    } catch {
+      return "";
+    }
+  };
+
+  function autoBuild() {
+    const events = live?.all ?? [];
+    if (events.length === 0) return;
+    const built = autoBuildAssignments(events, activeBar, fmtTime, newAssignmentId);
+    saveBoard({
+      date: today,
+      published: true,
+      assignments: built,
+      generalNotes: board.generalNotes,
+    });
+  }
+
 
   return (
     <div className="flex flex-col gap-6">
@@ -74,6 +94,11 @@ function TodaysBoard() {
             </button>
           ))}
         </div>
+        {live && live.all.length > 0 && (
+          <button onClick={autoBuild} className="btn btn-signal">
+            ⚡ Auto-build from schedule
+          </button>
+        )}
         <Link href="/edit" className="btn btn-primary">
           Edit Board
         </Link>
@@ -82,11 +107,30 @@ function TodaysBoard() {
       <BoardLiveAlerts assignments={assignments} />
 
       {assignments.length === 0 ? (
-        <div className="panel p-10 text-center">
-          <p className="text-chalk-dim">No assignments on today&apos;s board yet.</p>
-          <Link href="/edit" className="btn btn-primary mt-4">
-            Build today&apos;s board
-          </Link>
+        <div className="panel flex flex-col items-center gap-4 p-10 text-center">
+          <div>
+            <p className="font-display text-lg font-bold text-chalk">
+              No board for {formatLong(today)} yet
+            </p>
+            <p className="mt-1 text-sm text-chalk-dim">
+              {live && live.all.length > 0
+                ? "Auto-build a full board from this day's schedule, ranked by crowd draw — then fine-tune in Edit."
+                : "No games found for this day. Check the Full Schedule or pick another date."}
+            </p>
+          </div>
+          <div className="flex flex-wrap justify-center gap-2">
+            {live && live.all.length > 0 && (
+              <button onClick={autoBuild} className="btn btn-signal">
+                ⚡ Auto-build {live.all.length} games → board
+              </button>
+            )}
+            <Link href="/schedule" className="btn btn-ghost">
+              📡 Full Schedule
+            </Link>
+            <Link href="/edit" className="btn btn-ghost">
+              Build manually
+            </Link>
+          </div>
         </div>
       ) : view === "cards" ? (
         <div className="grid gap-3 lg:grid-cols-2">

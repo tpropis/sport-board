@@ -158,19 +158,9 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
     [state],
   );
 
-  // The date being viewed/edited. Defaults to today; if today has no board,
-  // open on the most recent populated board (so the app never looks empty).
+  // The date being viewed/edited — always defaults to today (the bar's day).
   const todayStr = todayInZone(activeBar?.timezone);
-  const currentDate = useMemo(() => {
-    if (selectedDate) return selectedDate;
-    const list = state.boards[state.activeBarId] ?? [];
-    if (list.some((b) => b.date === todayStr)) return todayStr;
-    const populated = list
-      .filter((b) => b.assignments.length > 0)
-      .map((b) => b.date)
-      .sort();
-    return populated.length ? populated[populated.length - 1] : todayStr;
-  }, [selectedDate, state, todayStr]);
+  const currentDate = selectedDate ?? todayStr;
   const isToday = currentDate === todayStr;
 
   const setActiveBar = useCallback((id: string) => {

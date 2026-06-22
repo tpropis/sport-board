@@ -9,6 +9,7 @@ import { getMarket } from "@/lib/markets";
 import { channelFor, matchNetwork } from "@/lib/providers";
 import type { Assignment } from "@/lib/types";
 import { autoPrioritize } from "@/lib/priority";
+import { autoBuildAssignments } from "@/lib/autobuild";
 
 const STATE_STYLE: Record<EventState, string> = {
   in: "border-signal/50 bg-signal/15 text-signal",
@@ -31,7 +32,7 @@ function StatusChip({ ev }: { ev: ScheduleEvent }) {
 }
 
 export default function FullSchedule() {
-  const { activeBar, getBoard, upsertAssignment, newAssignmentId, currentDate: today } =
+  const { activeBar, getBoard, saveBoard, upsertAssignment, newAssignmentId, currentDate: today } =
     useStore();
   const tz = activeBar.timezone;
   const market = getMarket(activeBar.market);
@@ -155,6 +156,22 @@ export default function FullSchedule() {
     <div className="flex flex-col gap-6">
       <SectionHeader kicker={`${activeBar.name} · ${today}`} title="Full Schedule">
         <DateStepper />
+        {data && data.events.length > 0 && (
+          <button
+            onClick={() => {
+              const built = autoBuildAssignments(data.events, activeBar, fmtTime, newAssignmentId);
+              saveBoard({
+                date: today,
+                published: true,
+                assignments: built,
+                generalNotes: getBoard(today).generalNotes,
+              });
+            }}
+            className="btn btn-signal"
+          >
+            ⚡ Auto-build board
+          </button>
+        )}
         {data && (
           <Pill tone={data.source === "live" ? "signal" : "amber"}>
             {data.source === "live" ? "● Live feed" : "○ Scheduled (offline)"}
