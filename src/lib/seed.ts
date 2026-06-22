@@ -213,6 +213,7 @@ function buildBoard(date: string): DailyBoard {
     a({
       tvNumber: 5, // Main center TV — the Braves get the house
       priority: 1,
+      eventId: "mlb-atl-mil",
       eventName: "Braves vs Brewers",
       team1: "Braves",
       team2: "Brewers",
@@ -231,6 +232,7 @@ function buildBoard(date: string): DailyBoard {
     a({
       tvNumber: 9, // World Cup match happening in Atlanta — local event
       priority: 2,
+      eventId: "wc-esp-ksa",
       eventName: "World Cup: Spain vs Saudi Arabia",
       team1: "Spain",
       team2: "Saudi Arabia",
@@ -249,6 +251,7 @@ function buildBoard(date: string): DailyBoard {
     a({
       tvNumber: 6, // US Open final round — Father's Day finish
       priority: 3,
+      eventId: "golf-usopen",
       eventName: "U.S. Open — Final Round",
       sport: "Golf",
       league: "USGA · Shinnecock Hills",
@@ -265,6 +268,7 @@ function buildBoard(date: string): DailyBoard {
     a({
       tvNumber: 3, // Far left — College World Series
       priority: 4,
+      eventId: "cws-unc-ou",
       eventName: "CWS Final Game 2: North Carolina vs Oklahoma",
       team1: "North Carolina",
       team2: "Oklahoma",
@@ -282,6 +286,7 @@ function buildBoard(date: string): DailyBoard {
     a({
       tvNumber: 4, // Left-center — IndyCar
       priority: 5,
+      eventId: "indy-roadamerica",
       eventName: "IndyCar: XPEL Grand Prix at Road America",
       sport: "Auto Racing",
       league: "NTT IndyCar Series",
@@ -297,6 +302,7 @@ function buildBoard(date: string): DailyBoard {
     a({
       tvNumber: 7, // Right bar — evening World Cup
       priority: 6,
+      eventId: "wc-bel-irn",
       eventName: "World Cup: Belgium vs Iran",
       team1: "Belgium",
       team2: "Iran",
@@ -314,6 +320,7 @@ function buildBoard(date: string): DailyBoard {
     a({
       tvNumber: 8, // Far-right — flex / national MLB tonight
       priority: 7,
+      eventId: "mlb-snb",
       eventName: "MLB Sunday Night Baseball",
       sport: "Baseball",
       league: "MLB · national window",

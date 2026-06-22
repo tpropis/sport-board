@@ -7,6 +7,10 @@ import { AssignmentCard } from "@/components/AssignmentCard";
 import { SectionHeader, TVBadge, LabelChip, Pill } from "@/components/ui";
 import { deriveLabels } from "@/lib/constants";
 import { getProvider } from "@/lib/providers";
+import { LiveScheduleProvider, useLive } from "@/lib/live";
+import type { Assignment } from "@/lib/types";
+import { scoreEvent } from "@/lib/priority";
+import { getMarket } from "@/lib/markets";
 
 function formatLong(iso: string): string {
   const [y, m, d] = iso.split("-").map(Number);
@@ -32,7 +36,15 @@ const COLS = [
   "✓",
 ];
 
-export default function TodaysBoard() {
+export default function TodaysBoardPage() {
+  return (
+    <LiveScheduleProvider>
+      <TodaysBoard />
+    </LiveScheduleProvider>
+  );
+}
+
+function TodaysBoard() {
   const { activeBar, getBoard } = useStore();
   const [view, setView] = useState<"cards" | "table">("cards");
   const today = todayInZone(activeBar.timezone);
@@ -66,6 +78,8 @@ export default function TodaysBoard() {
           Edit Board
         </Link>
       </SectionHeader>
+
+      <BoardLiveAlerts assignments={assignments} />
 
       {assignments.length === 0 ? (
         <div className="panel p-10 text-center">
@@ -161,4 +175,72 @@ export default function TodaysBoard() {
       </p>
     </div>
   );
+}
+
+function BoardLiveAlerts({ assignments }: { assignments: Assignment[] }) {
+  const { activeBar } = useStore();
+  const live = useLive();
+  if (!live) return null;
+
+  const market = getMarket(activeBar.market);
+  const disrupted = assignments
+    .map((a) => ({ a, ev: live.lookup(a.eventId, a.eventName) }))
+    .filter(({ ev }) => ev && (ev.status.state === "delayed" || ev.status.state === "postponed"));
+
+  if (disrupted.length === 0) return null;
+
+  // Suggest the best available game not already on the board to swap in.
+  const onBoard = new Set(assignments.map((a) => a.eventName.toLowerCase()));
+  const candidate = live.all
+    .filter(
+      (e) =>
+        !onBoard.has(e.name.toLowerCase()) &&
+        (e.status.state === "in" || e.status.state === "pre"),
+    )
+    .map((e) => ({ e, s: scoreEvent({ ...blankFromEvent(e) }, market).score }))
+    .sort((x, y) => y.s - x.s)[0]?.e;
+
+  return (
+    <div className="rounded-lg border border-amber-accent/50 bg-amber-accent/10 p-4">
+      <div className="mb-2 flex items-center gap-2 font-display font-bold text-amber-glow">
+        ⚠ Live disruption — {disrupted.length} TV{disrupted.length > 1 ? "s" : ""} need a look
+      </div>
+      <ul className="flex flex-col gap-1.5 text-sm text-chalk-dim">
+        {disrupted.map(({ a, ev }) => (
+          <li key={a.id} className="flex flex-wrap items-center gap-2">
+            <span className="font-semibold text-chalk">TV {a.tvNumber}</span>
+            <span>{a.eventName}</span>
+            <span className="label-chip border-amber-accent/50 bg-amber-accent/15 text-amber-glow">
+              {ev!.status.detail}
+            </span>
+          </li>
+        ))}
+      </ul>
+      {candidate && (
+        <p className="mt-3 text-sm text-chalk-dim">
+          Best available swap right now:{" "}
+          <span className="font-semibold text-chalk">{candidate.name}</span>
+          {candidate.networks[0] ? ` · ${candidate.networks[0]}` : ""} —{" "}
+          <Link href="/schedule" className="text-amber-glow hover:underline">
+            open Full Schedule
+          </Link>
+        </p>
+      )}
+    </div>
+  );
+}
+
+// Minimal shape so scoreEvent can rank a ScheduleEvent.
+function blankFromEvent(e: { name: string; league: string; sport: string; local: boolean }): Assignment {
+  return {
+    id: "tmp",
+    tvNumber: 0,
+    priority: 0,
+    eventName: e.name,
+    league: e.league,
+    sport: e.sport,
+    soundRule: "Music stays on",
+    labels: e.local ? ["LOCAL"] : [],
+    confirmed: false,
+  };
 }

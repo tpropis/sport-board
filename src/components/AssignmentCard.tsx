@@ -5,6 +5,17 @@ import { deriveLabels } from "@/lib/constants";
 import { LabelChip, TVBadge } from "./ui";
 import { useStore, zoneLabel } from "@/lib/store";
 import { getProvider } from "@/lib/providers";
+import { useLive } from "@/lib/live";
+import type { EventState } from "@/lib/schedule/types";
+
+const LIVE_STYLE: Record<EventState, string> = {
+  in: "border-signal/50 bg-signal/15 text-signal",
+  delayed: "border-amber-accent/60 bg-amber-accent/20 text-amber-glow",
+  pre: "border-ink-600 bg-ink-800 text-chalk-dim",
+  post: "border-ink-600 bg-ink-900 text-chalk-faint",
+  postponed: "border-alert/60 bg-alert-dim/40 text-alert",
+  canceled: "border-alert/60 bg-alert-dim/40 text-alert",
+};
 
 function Field({
   label,
@@ -46,6 +57,10 @@ export function AssignmentCard({
   const { activeBar } = useStore();
   const providerName = getProvider(activeBar.providerId)?.name ?? "Channel";
   const tz = zoneLabel(activeBar.timezone);
+  const live = useLive()?.lookup(a.eventId, a.eventName);
+  const liveState = live?.status.state;
+  const showScore = live && (live.score1 != null || live.score2 != null) && liveState !== "pre";
+  const alert = liveState === "delayed" || liveState === "postponed" || liveState === "canceled";
   const labels = deriveLabels(a);
   const matchup =
     a.team1 && a.team2 ? `${a.team1} vs ${a.team2}` : a.eventName;
@@ -85,6 +100,19 @@ export function AssignmentCard({
                 {tz && <span className="ml-1 text-amber-glow/70">{tz}</span>}
               </span>
             )}
+            {live && liveState && liveState !== "pre" && (
+              <span className={`label-chip ${LIVE_STYLE[liveState]}`}>
+                {(liveState === "in" || liveState === "delayed") && (
+                  <span className="mr-1 inline-block h-1.5 w-1.5 animate-pulse rounded-full bg-current" />
+                )}
+                {liveState === "in" && live.status.clock ? live.status.clock : live.status.detail}
+              </span>
+            )}
+            {showScore && (
+              <span className="tnum font-mono text-sm font-bold text-chalk">
+                {live!.score1}–{live!.score2}
+              </span>
+            )}
           </div>
 
           <div className="mt-0.5 text-xs text-chalk-faint">
@@ -122,6 +150,15 @@ export function AssignmentCard({
               </span>
             )}
           </div>
+
+          {alert && (
+            <p className="mt-3 flex items-center gap-2 rounded-md border border-amber-accent/50 bg-amber-accent/10 px-3 py-2 text-sm font-semibold text-amber-glow">
+              ⚠ {live!.status.detail}
+              {liveState === "delayed"
+                ? " — consider swapping this TV until play resumes."
+                : " — pick a replacement game for this TV."}
+            </p>
+          )}
 
           {a.notes && (
             <p className="mt-3 rounded-md border border-ink-700 bg-ink-900/60 px-3 py-2 text-sm text-chalk-dim">

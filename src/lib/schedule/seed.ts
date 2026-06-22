@@ -60,7 +60,7 @@ export function seedSchedule(date: string): ScheduleEvent[] {
     mk("golf-usopen", "PGA / USGA", "Golf", "U.S. Open — Final Round", "12:00", live("Final Round"), ["NBC", "Peacock"], { national: true, venue: "Shinnecock Hills", city: "Southampton, NY" }),
 
     // ---- College World Series ----
-    mk("cws-unc-ou", "NCAA", "Baseball", "North Carolina vs Oklahoma", "14:30", live("Bot 3rd"), ["ABC"], { score1: "2", score2: "1", national: true, venue: "Charles Schwab Field", city: "Omaha" }),
+    mk("cws-unc-ou", "NCAA", "Baseball", "North Carolina vs Oklahoma", "14:30", { state: "delayed", detail: "Rain Delay" }, ["ABC"], { score1: "2", score2: "1", national: true, venue: "Charles Schwab Field", city: "Omaha" }),
 
     // ---- IndyCar ----
     mk("indy-roadamerica", "IndyCar", "Auto Racing", "XPEL Grand Prix at Road America", "14:20", live("Lap 22 / 55"), ["FOX"], { national: true, venue: "Road America", city: "Elkhart Lake, WI" }),

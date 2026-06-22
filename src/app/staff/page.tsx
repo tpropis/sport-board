@@ -6,6 +6,7 @@ import { useStore, todayInZone, zoneLabel, sortByTvOrder } from "@/lib/store";
 import { AssignmentCard } from "@/components/AssignmentCard";
 import { LayoutViewer } from "@/components/PhotoMapper";
 import { TVBadge } from "@/components/ui";
+import { LiveScheduleProvider } from "@/lib/live";
 
 function formatLong(iso: string): string {
   const [y, m, d] = iso.split("-").map(Number);
@@ -16,7 +17,15 @@ function formatLong(iso: string): string {
   });
 }
 
-export default function StaffView() {
+export default function StaffViewPage() {
+  return (
+    <LiveScheduleProvider>
+      <StaffView />
+    </LiveScheduleProvider>
+  );
+}
+
+function StaffView() {
   const { activeBar, getBoard, ready } = useStore();
   const today = todayInZone(activeBar.timezone);
   const board = getBoard(today);

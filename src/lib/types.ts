@@ -91,6 +91,7 @@ export interface SoundRule {
 
 export interface Assignment {
   id: string;
+  eventId?: string; // links to a live ScheduleEvent for status/score updates
   tvNumber: number;
   priority: number;
   eventName: string;
