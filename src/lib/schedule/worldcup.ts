@@ -86,13 +86,36 @@ function statusFor(startMs: number, now: number): EventStatus {
   return { state: "post", detail: "Final" };
 }
 
+/** Knockout slots — teams are TBD until groups finish, so these carry round
+ *  labels, real dates/venues, and FOX/FS1 windows. The live feed fills teams in. */
+const KNOCKOUTS: Record<string, [time24: string, label: string, ch: "FOX" | "FS1", city: string][]> = {
+  "2026-06-28": [["15:00", "Round of 32 · Match 1", "FOX", "Los Angeles"], ["19:00", "Round of 32 · Match 2", "FOX", "Houston"]],
+  "2026-06-29": [["15:00", "Round of 32 · Match 3", "FS1", "Boston"], ["19:00", "Round of 32 · Match 4", "FOX", "Mexico City"]],
+  "2026-06-30": [["15:00", "Round of 32 · Match 5", "FOX", "Dallas"], ["19:00", "Round of 32 · Match 6", "FOX", "Atlanta"]],
+  "2026-07-01": [["15:00", "Round of 32 · Match 7", "FS1", "Seattle"], ["19:00", "Round of 32 · Match 8", "FOX", "Vancouver"]],
+  "2026-07-02": [["15:00", "Round of 32 · Match 9", "FOX", "Philadelphia"], ["19:00", "Round of 32 · Match 10", "FOX", "Miami"]],
+  "2026-07-03": [
+    ["13:00", "Round of 32 · Match 11", "FS1", "Kansas City"],
+    ["16:00", "Round of 32 · Match 12", "FOX", "Toronto"],
+    ["19:00", "Round of 32 · Match 13", "FOX", "Atlanta"],
+  ],
+  "2026-07-04": [["13:00", "Round of 16 · Match 1", "FOX", "Philadelphia"], ["17:00", "Round of 16 · Match 2", "FOX", "Houston"]],
+  "2026-07-05": [["13:00", "Round of 16 · Match 3", "FOX", "New Jersey"], ["17:00", "Round of 16 · Match 4", "FS1", "Mexico City"]],
+  "2026-07-06": [["15:00", "Round of 16 · Match 5", "FOX", "Dallas"], ["19:00", "Round of 16 · Match 6", "FOX", "Los Angeles"]],
+  "2026-07-07": [["15:00", "Round of 16 · Match 7", "FOX", "Atlanta"], ["19:00", "Round of 16 · Match 8", "FS1", "Seattle"]],
+  "2026-07-09": [["16:00", "Quarterfinal 1", "FOX", "Los Angeles"]],
+  "2026-07-10": [["12:00", "Quarterfinal 2", "FOX", "Boston"], ["16:00", "Quarterfinal 3", "FOX", "Kansas City"]],
+  "2026-07-11": [["16:00", "Quarterfinal 4", "FOX", "Miami"]],
+  "2026-07-14": [["15:00", "Semifinal 1", "FOX", "Dallas"]],
+  "2026-07-15": [["15:00", "Semifinal 2", "FOX", "Atlanta"]],
+  "2026-07-18": [["15:00", "Third-Place Match", "FOX", "Miami"]],
+  "2026-07-19": [["15:00", "🏆 World Cup Final", "FOX", "New Jersey"]],
+};
+
 /** World Cup events for a date, with status computed live from kickoff time. */
 export function worldCupForDate(date: string, now = Date.now()): ScheduleEvent[] {
-  const fixtures = FIXTURES[date];
-  if (!fixtures) return [];
-  return fixtures.map(([time, t1, t2, ch, city], i) => {
+  const group = (FIXTURES[date] ?? []).map(([time, t1, t2, ch, city], i) => {
     const startUtc = `${date}T${time}:00-04:00`;
-    const startMs = new Date(startUtc).getTime();
     return {
       id: `wc-${date}-${i}`,
       league: "FIFA World Cup",
@@ -101,13 +124,35 @@ export function worldCupForDate(date: string, now = Date.now()): ScheduleEvent[]
       team1: t1,
       team2: t2,
       startUtc,
-      status: statusFor(startMs, now),
+      status: statusFor(new Date(startUtc).getTime(), now),
       networks: [ch, "Telemundo"],
       city,
       national: true,
       local: false,
-    };
+    } satisfies ScheduleEvent;
   });
+
+  const knockout = (KNOCKOUTS[date] ?? []).map(([time, label, ch, city], i) => {
+    const startUtc = `${date}T${time}:00-04:00`;
+    const round = label.startsWith("🏆") ? "FIFA World Cup — FINAL" : "FIFA World Cup — Knockout";
+    return {
+      id: `wck-${date}-${i}`,
+      league: round,
+      sport: "Soccer",
+      name: label,
+      startUtc,
+      status: statusFor(new Date(startUtc).getTime(), now),
+      networks: [ch, "Telemundo"],
+      city,
+      national: true,
+      local: false,
+    } satisfies ScheduleEvent;
+  });
+
+  return [...group, ...knockout];
 }
 
-export const WORLD_CUP_DATES = Object.keys(FIXTURES);
+export const WORLD_CUP_DATES = [
+  ...Object.keys(FIXTURES),
+  ...Object.keys(KNOCKOUTS),
+].sort();
