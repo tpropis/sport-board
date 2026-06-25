@@ -6,7 +6,7 @@ import { useStore, zoneLabel, sortByTvOrder } from "@/lib/store";
 import { autoBuildAssignments } from "@/lib/autobuild";
 import { AssignmentCard } from "@/components/AssignmentCard";
 import { SectionHeader, TVBadge, LabelChip, Pill, DateStepper } from "@/components/ui";
-import { deriveLabels } from "@/lib/constants";
+import { deriveLabels, matchupTitle } from "@/lib/constants";
 import { getProvider, channelFor, matchNetwork } from "@/lib/providers";
 import { useLive } from "@/lib/live";
 import type { Assignment } from "@/lib/types";
@@ -169,7 +169,7 @@ export default function TodaysBoard() {
                     <td className="tnum px-3 py-3 font-mono text-chalk-faint">#{a.priority}</td>
                     <td className="px-3 py-3">
                       <div className="font-semibold text-chalk">
-                        {a.team1 && a.team2 ? `${a.team1} vs ${a.team2}` : a.eventName}
+                        {matchupTitle(a)}
                       </div>
                       <div className="mt-1 flex flex-wrap gap-1">
                         {labels.slice(0, 3).map((l) => (

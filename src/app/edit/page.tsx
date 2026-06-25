@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useState } from "react";
 import { useStore, sortByTvOrder } from "@/lib/store";
+import { matchupTitle } from "@/lib/constants";
 import { AssignmentEditor } from "@/components/AssignmentEditor";
 import { SectionHeader, TVBadge, Toggle, DateStepper } from "@/components/ui";
 import type { Assignment } from "@/lib/types";
@@ -160,7 +161,7 @@ export default function EditBoard() {
               <TVBadge number={a.tvNumber} size="md" />
               <div className="min-w-0 flex-1">
                 <div className="truncate font-semibold text-chalk">
-                  {a.team1 && a.team2 ? `${a.team1} vs ${a.team2}` : a.eventName}
+                  {matchupTitle(a)}
                 </div>
                 <div className="truncate text-xs text-chalk-dim">
                   {[a.startTime, a.watchOn, a.directvChannel ? `DIRECTV ${a.directvChannel}` : null, a.streamingApp]

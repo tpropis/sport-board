@@ -117,6 +117,13 @@ export const BRAVES_NATIONAL_OPTIONS = [
   "MLB Network",
 ];
 
+/** Title for an assignment: "Team1 vs Team2" for team sports, otherwise the
+ *  event/tournament name (golf, tennis, racing, etc. — no fake "vs"). */
+export function matchupTitle(a: { team1?: string; team2?: string; eventName: string }): string {
+  const real = (x?: string) => !!x && !/^(tbd|tba|undecided)$/i.test(x.trim());
+  return real(a.team1) && real(a.team2) ? `${a.team1} vs ${a.team2}` : a.eventName;
+}
+
 export const LABEL_STYLES: Record<AssignmentLabel, string> = {
   LOCAL: "border-amber-accent/40 bg-amber-accent/10 text-amber-glow",
   "BIG GAME": "border-amber-accent/50 bg-amber-accent/15 text-amber-glow",

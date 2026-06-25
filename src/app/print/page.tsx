@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useStore, zoneLabel, sortByTvOrder } from "@/lib/store";
+import { matchupTitle } from "@/lib/constants";
 import { getProvider } from "@/lib/providers";
 
 function formatLong(iso: string): string {
@@ -121,7 +122,7 @@ export default function PrintView() {
                   <td className="px-1.5 py-2 font-mono text-neutral-500">{a.priority}</td>
                   <td className="px-1.5 py-2">
                     <div className="font-bold">
-                      {a.team1 && a.team2 ? `${a.team1} vs ${a.team2}` : a.eventName}
+                      {matchupTitle(a)}
                     </div>
                     <div className="text-[10px] text-neutral-500">
                       {[a.sport, a.league].filter(Boolean).join(" · ")}

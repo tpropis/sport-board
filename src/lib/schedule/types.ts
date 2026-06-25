@@ -97,13 +97,22 @@ export function normalizeEspnEvent(
     const clock = comp.status?.type?.shortDetail;
     if (clock && status.state === "in") status.clock = clock;
 
+    // Individual sports (golf, tennis, racing, fighting) aren't "X vs Y" — use
+    // the tournament/event name. Also drop TBD/undecided placeholder teams.
+    const t1 = team(away);
+    const t2 = team(home);
+    const placeholder = (x?: string) => !x || /^(tbd|tba|undecided)$/i.test(x.trim());
+    const individual = /golf|tennis|racing|mma|ufc|boxing/i.test(`${meta.sport} ${meta.display}`);
+    const useTeams = !individual && !placeholder(t1) && !placeholder(t2);
+    const eventName = ev.name ?? ev.shortName ?? meta.display;
+
     return {
       id: String(ev.id ?? `${meta.display}-${comp.id ?? Math.random()}`),
       league: meta.display,
       sport: meta.sport,
-      name: away && home ? `${team(away)} vs ${team(home)}` : ev.name ?? ev.shortName ?? "Event",
-      team1: team(away),
-      team2: team(home),
+      name: useTeams ? `${t1} vs ${t2}` : eventName,
+      team1: useTeams ? t1 : undefined,
+      team2: useTeams ? t2 : undefined,
       startUtc: ev.date,
       status,
       score1: away?.score,

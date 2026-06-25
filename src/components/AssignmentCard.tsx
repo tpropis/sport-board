@@ -59,11 +59,12 @@ export function AssignmentCard({
   const tz = zoneLabel(activeBar.timezone);
   const live = useLive()?.lookup(a.eventId, a.eventName);
   const liveState = live?.status.state;
+  const realTeam = (x?: string) => x && !/^(tbd|tba|undecided)$/i.test(x.trim());
   const showScore = live && (live.score1 != null || live.score2 != null) && liveState !== "pre";
   const alert = liveState === "delayed" || liveState === "postponed" || liveState === "canceled";
   const labels = deriveLabels(a);
   const matchup =
-    a.team1 && a.team2 ? `${a.team1} vs ${a.team2}` : a.eventName;
+    realTeam(a.team1) && realTeam(a.team2) ? `${a.team1} vs ${a.team2}` : a.eventName;
   const staff = variant === "staff";
 
   return (

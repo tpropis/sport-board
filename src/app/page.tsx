@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useStore, zoneLabel, sortByTvOrder } from "@/lib/store";
+import { matchupTitle } from "@/lib/constants";
 import { LayoutViewer } from "@/components/PhotoMapper";
 import { TVBadge, Pill } from "@/components/ui";
 
@@ -130,7 +131,7 @@ export default function CommandCenter() {
                 <TVBadge number={a.tvNumber} size="md" />
                 <div className="min-w-0 flex-1">
                   <div className="truncate font-semibold text-chalk">
-                    {a.team1 && a.team2 ? `${a.team1} vs ${a.team2}` : a.eventName}
+                    {matchupTitle(a)}
                   </div>
                   <div className="truncate text-xs text-chalk-dim">
                     {a.watchOn}
