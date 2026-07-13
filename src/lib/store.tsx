@@ -54,6 +54,21 @@ const ZONE_ABBREV: Record<string, string> = {
   "Pacific/Honolulu": "HT",
 };
 
+/** Format an event's UTC instant as a bar-local time; midnight placeholders
+ *  (common for golf/all-day events) render as "All day". */
+export function formatEventTime(iso: string, tz?: string): string {
+  try {
+    const s = new Intl.DateTimeFormat("en-US", {
+      timeZone: tz,
+      hour: "numeric",
+      minute: "2-digit",
+    }).format(new Date(iso));
+    return s === "12:00 AM" ? "All day" : s;
+  } catch {
+    return "";
+  }
+}
+
 /** Short, bar-friendly timezone label, e.g. "ET". */
 export function zoneLabel(tz?: string): string {
   if (!tz) return "";

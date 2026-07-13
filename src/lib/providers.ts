@@ -116,7 +116,7 @@ export const CHANNEL_LINEUP: Record<string, Lineup> = {
   "SEC Network": { directv: "611", dish: "404" },
   "ACC Network": { directv: "612", dish: "402" },
   "Big Ten Network": { directv: "610", dish: "439" },
-  FS1: { directv: "219", dish: "150" },
+  FS1: { directv: "219", dish: "150", xfinity: "31" },
   FS2: { directv: "618", dish: "149" },
   // Atlanta broadcast locals (DIRECTV). Confirmed against the bar's paper: FOX = 5.
   FOX: { directv: "5", dish: "5" },

@@ -49,6 +49,7 @@ export function leagueKeyFor(a: Pick<Assignment, "league" | "sport">): LeagueKey
 const NATIONAL: { test: RegExp; bonus: number; label: string; requireLeague?: LeagueKey }[] = [
   { test: /super bowl/, bonus: 70, label: "Super Bowl", requireLeague: "NFL" },
   { test: /world series/, bonus: 55, label: "World Series", requireLeague: "MLB" },
+  { test: /home run derby|all-star game|all star game/, bonus: 34, label: "MLB All-Star", requireLeague: "MLB" },
   { test: /college football playoff|national championship|natl championship/, bonus: 58, label: "Championship", requireLeague: "CFB" },
   { test: /nba finals/, bonus: 52, label: "NBA Finals", requireLeague: "NBA" },
   { test: /stanley cup/, bonus: 48, label: "Stanley Cup", requireLeague: "NHL" },

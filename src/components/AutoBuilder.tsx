@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef } from "react";
-import { useStore } from "@/lib/store";
+import { useStore, formatEventTime } from "@/lib/store";
 import { useLive } from "@/lib/live";
 import { autoBuildAssignments } from "@/lib/autobuild";
 
@@ -30,17 +30,7 @@ export function AutoBuilder() {
     } catch {
       /* ignore */
     }
-    const fmt = (iso: string) => {
-      try {
-        return new Intl.DateTimeFormat("en-US", {
-          timeZone: activeBar.timezone,
-          hour: "numeric",
-          minute: "2-digit",
-        }).format(new Date(iso));
-      } catch {
-        return "";
-      }
-    };
+    const fmt = (iso: string) => formatEventTime(iso, activeBar.timezone);
     const built = autoBuildAssignments(live.all, activeBar, fmt, newAssignmentId);
     saveBoard({
       date: currentDate,

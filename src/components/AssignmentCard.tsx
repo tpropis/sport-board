@@ -97,8 +97,10 @@ export function AssignmentCard({
             </h3>
             {a.startTime && (
               <span className="tnum font-mono text-sm font-semibold text-amber-glow">
-                {a.startTime}
-                {tz && <span className="ml-1 text-amber-glow/70">{tz}</span>}
+                {a.startTime === "12:00 AM" ? "All day" : a.startTime}
+                {tz && a.startTime !== "12:00 AM" && (
+                  <span className="ml-1 text-amber-glow/70">{tz}</span>
+                )}
               </span>
             )}
             {live && liveState && liveState !== "pre" && (

@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
-import { useStore, zoneLabel, sortByTvOrder } from "@/lib/store";
+import { useStore, zoneLabel, sortByTvOrder, formatEventTime } from "@/lib/store";
 import { SectionHeader, Pill, Toggle, DateStepper } from "@/components/ui";
 import type { ScheduleEvent, ScheduleResponse, EventState } from "@/lib/schedule/types";
 import { getMarket } from "@/lib/markets";
@@ -78,20 +78,7 @@ export default function FullSchedule() {
     };
   }, [autoRefresh, load]);
 
-  const fmtTime = useCallback(
-    (iso: string) => {
-      try {
-        return new Intl.DateTimeFormat("en-US", {
-          timeZone: tz,
-          hour: "numeric",
-          minute: "2-digit",
-        }).format(new Date(iso));
-      } catch {
-        return "";
-      }
-    },
-    [tz],
-  );
+  const fmtTime = useCallback((iso: string) => formatEventTime(iso, tz), [tz]);
 
   const sports = useMemo(() => {
     const s = new Set<string>();

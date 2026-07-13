@@ -7,6 +7,7 @@ import {
 } from "@/lib/schedule/types";
 import { seedSchedule, DEMO_DATE } from "@/lib/schedule/seed";
 import { worldCupForDate } from "@/lib/schedule/worldcup";
+import { specialForDate } from "@/lib/schedule/special";
 
 // Always fresh — this is the live surface.
 export const dynamic = "force-dynamic";
@@ -58,7 +59,12 @@ export async function GET(req: Request) {
     date === DEMO_DATE
       ? seedSchedule(date)
       : [...seedSchedule(date), ...worldCupForDate(date)];
-  const events = useLive ? live : fallback;
+  const base = useLive ? live : fallback;
+  // Special events (Home Run Derby, All-Star Game…) aren't in ESPN's game feed,
+  // so always merge them in for the date, avoiding name duplicates.
+  const names = new Set(base.map((e) => e.name.toLowerCase()));
+  const specials = specialForDate(date).filter((s) => !names.has(s.name.toLowerCase()));
+  const events = [...base, ...specials];
 
   // Sort: live & delayed first, then upcoming by time, then finals.
   const rank = (s: string) =>

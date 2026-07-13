@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useState } from "react";
-import { useStore, zoneLabel, sortByTvOrder } from "@/lib/store";
+import { useStore, zoneLabel, sortByTvOrder, formatEventTime } from "@/lib/store";
 import { autoBuildAssignments } from "@/lib/autobuild";
 import { AssignmentCard } from "@/components/AssignmentCard";
 import { SectionHeader, TVBadge, LabelChip, Pill, DateStepper } from "@/components/ui";
@@ -48,17 +48,7 @@ export default function TodaysBoard() {
   const providerName = getProvider(activeBar.providerId)?.name ?? "Channel";
   const tz = zoneLabel(activeBar.timezone);
 
-  const fmtTime = (iso: string) => {
-    try {
-      return new Intl.DateTimeFormat("en-US", {
-        timeZone: activeBar.timezone,
-        hour: "numeric",
-        minute: "2-digit",
-      }).format(new Date(iso));
-    } catch {
-      return "";
-    }
-  };
+  const fmtTime = (iso: string) => formatEventTime(iso, activeBar.timezone);
 
   function autoBuild() {
     const events = live?.all ?? [];
@@ -233,17 +223,7 @@ function BoardLiveAlerts({ assignments }: { assignments: Assignment[] }) {
 
   if (disrupted.length === 0) return null;
 
-  const fmtTime = (iso: string) => {
-    try {
-      return new Intl.DateTimeFormat("en-US", {
-        timeZone: activeBar.timezone,
-        hour: "numeric",
-        minute: "2-digit",
-      }).format(new Date(iso));
-    } catch {
-      return "";
-    }
-  };
+  const fmtTime = (iso: string) => formatEventTime(iso, activeBar.timezone);
 
   // Rank available games (not already on the board) by crowd draw.
   const onBoard = new Set(assignments.map((a) => a.eventName.toLowerCase()));
