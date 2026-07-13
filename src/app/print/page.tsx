@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useStore, zoneLabel, sortByTvOrder } from "@/lib/store";
 import { matchupTitle } from "@/lib/constants";
 import { getProvider } from "@/lib/providers";
@@ -27,9 +27,22 @@ export default function PrintView() {
   const tz = zoneLabel(activeBar.timezone);
 
   const [copies, setCopies] = useState(2);
+  const [autoLink, setAutoLink] = useState("");
+  const [copied, setCopied] = useState(false);
+  const printedRef = useRef(false);
+
+  // Read query (?copies, ?auto) for kiosk auto-print; else the saved default.
   useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const q = Number(params.get("copies"));
     const saved = Number(localStorage.getItem(COPIES_KEY));
-    if (saved >= 1 && saved <= 20) setCopies(saved);
+    const c = q >= 1 && q <= 20 ? q : saved >= 1 && saved <= 20 ? saved : 2;
+    setCopies(c);
+    if (params.get("auto") && !printedRef.current) {
+      printedRef.current = true;
+      // Let the sheets render, then fire the print (silent in kiosk mode).
+      setTimeout(() => window.print(), 900);
+    }
   }, []);
   function pick(n: number) {
     const c = Math.max(1, Math.min(20, n || 1));
@@ -39,6 +52,17 @@ export default function PrintView() {
     } catch {
       /* ignore */
     }
+  }
+
+  useEffect(() => {
+    setAutoLink(`${window.location.origin}${window.location.pathname}?auto=1&copies=${copies}`);
+  }, [copies]);
+
+  function copyLink() {
+    navigator.clipboard?.writeText(autoLink).then(() => {
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1500);
+    });
   }
 
   return (
@@ -83,6 +107,53 @@ export default function PrintView() {
         printer as a single job — each on its own page. Set your morning default
         here; it&apos;s remembered on this device.
       </p>
+
+      {/* Auto-print (kiosk) */}
+      <details className="no-print mx-auto mb-6 max-w-[800px] rounded-lg border border-ink-700 bg-ink-850/70 px-4 py-3">
+        <summary className="cursor-pointer text-sm font-semibold text-amber-glow">
+          ⏰ Auto-print each morning (kiosk setup)
+        </summary>
+        <div className="mt-3 flex flex-col gap-3 text-sm text-chalk-dim">
+          <p>
+            Open this link on the bar&apos;s back-office computer and it prints{" "}
+            <strong className="text-chalk">{copies}</strong> cop
+            {copies === 1 ? "y" : "ies"} automatically on load:
+          </p>
+          <div className="flex flex-wrap items-center gap-2">
+            <input
+              readOnly
+              value={autoLink}
+              onFocus={(e) => e.currentTarget.select()}
+              className="input flex-1 font-mono text-xs"
+            />
+            <button onClick={copyLink} className="btn btn-ghost whitespace-nowrap">
+              {copied ? "✓ Copied" : "Copy link"}
+            </button>
+          </div>
+          <ol className="ml-4 list-decimal space-y-1.5 text-chalk-faint">
+            <li>
+              Bookmark that link on a dedicated PC/tablet by the printer and open it
+              each morning (or set it as the browser&apos;s home page).
+            </li>
+            <li>
+              For a <strong className="text-chalk">fully silent</strong> print (no
+              dialog), launch Chrome once in kiosk-print mode:
+              <code className="mt-1 block overflow-x-auto rounded bg-ink-950 px-2 py-1 font-mono text-[11px] text-chalk">
+                chrome --kiosk-printing --app=&quot;{autoLink || "…/print?auto=1&copies=2"}&quot;
+              </code>
+              It then prints straight to the default printer with no prompt.
+            </li>
+            <li>
+              To fully automate the open + close each morning, pair it with the OS
+              scheduler (Windows Task Scheduler / macOS <em>launchd</em> / cron).
+            </li>
+          </ol>
+          <p className="text-xs text-chalk-faint">
+            Without kiosk mode the link still auto-opens the normal print dialog — one
+            keypress to confirm.
+          </p>
+        </div>
+      </details>
 
       {/* Copies — each on its own printed page */}
       {Array.from({ length: copies }).map((_, i) => (

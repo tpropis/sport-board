@@ -2,7 +2,7 @@ import type { ScheduleEvent } from "./schedule/types";
 import type { Assignment, Bar } from "./types";
 import { scoreEvent, autoPrioritize } from "./priority";
 import { getMarket } from "./markets";
-import { channelFor, matchNetwork } from "./providers";
+import { pickBroadcast } from "./providers";
 
 function toBlank(e: ScheduleEvent): Assignment {
   return {
@@ -42,9 +42,7 @@ export function autoBuildAssignments(
   const assignments = ranked.map(({ e }, i) => {
     const tv = tvs[i];
     const tvCfg = bar.tvs.find((t) => t.number === tv);
-    const network = e.networks[0];
-    const streaming = e.networks.find((n) => /app|\+|peacock|season pass|max|tv$/i.test(n));
-    const ch = channelFor(matchNetwork(network) ?? "", bar.providerId, overrides);
+    const { watchOn, channel, streaming } = pickBroadcast(e.networks, bar.providerId, overrides);
     return {
       id: mkId(),
       eventId: e.id,
@@ -56,8 +54,8 @@ export function autoBuildAssignments(
       sport: e.sport,
       league: e.league,
       startTime: fmtTime(e.startUtc),
-      watchOn: network,
-      directvChannel: ch,
+      watchOn,
+      directvChannel: channel,
       streamingApp: streaming,
       device: tvCfg?.defaultDevice ?? "DIRECTV box",
       remote: tvCfg?.defaultRemote ?? "Main DIRECTV Remote",

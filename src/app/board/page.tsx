@@ -7,7 +7,7 @@ import { autoBuildAssignments } from "@/lib/autobuild";
 import { AssignmentCard } from "@/components/AssignmentCard";
 import { SectionHeader, TVBadge, LabelChip, Pill, DateStepper } from "@/components/ui";
 import { deriveLabels, matchupTitle } from "@/lib/constants";
-import { getProvider, channelFor, matchNetwork } from "@/lib/providers";
+import { getProvider, pickBroadcast } from "@/lib/providers";
 import { useLive } from "@/lib/live";
 import type { Assignment } from "@/lib/types";
 import { scoreEvent } from "@/lib/priority";
@@ -238,10 +238,8 @@ function BoardLiveAlerts({ assignments }: { assignments: Assignment[] }) {
     .map((x) => x.e);
 
   function swap(a: Assignment, cand: (typeof candidates)[number]) {
-    const network = cand.networks[0];
-    const streaming = cand.networks.find((n) => /app|\+|peacock|season pass|max|tv$/i.test(n));
-    const ch = channelFor(
-      matchNetwork(network) ?? "",
+    const { watchOn, channel, streaming } = pickBroadcast(
+      cand.networks,
       activeBar.providerId,
       activeBar.channelOverrides?.[activeBar.providerId ?? ""],
     );
@@ -254,8 +252,8 @@ function BoardLiveAlerts({ assignments }: { assignments: Assignment[] }) {
       sport: cand.sport,
       league: cand.league,
       startTime: fmtTime(cand.startUtc),
-      watchOn: network,
-      directvChannel: ch,
+      watchOn,
+      directvChannel: channel,
       streamingApp: streaming,
       labels: cand.local ? ["LOCAL"] : [],
       notes: [cand.venue, cand.city].filter(Boolean).join(" · ") || undefined,

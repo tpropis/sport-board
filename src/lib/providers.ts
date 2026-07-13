@@ -175,6 +175,35 @@ export function isNationalProvider(providerId?: string): boolean {
   return p?.type === "satellite";
 }
 
+/**
+ * Choose how to watch an event: prefer a linear channel on the bar's provider
+ * (DIRECTV first), fall back to the first network, and always surface a
+ * streaming option as a backup so bars can use an app if they have to.
+ */
+export function pickBroadcast(
+  networks: string[],
+  providerId?: string,
+  overrides?: Record<string, string>,
+): { watchOn?: string; channel?: string; streaming?: string } {
+  let watchOn: string | undefined;
+  let channel: string | undefined;
+  for (const n of networks) {
+    const ch = channelFor(matchNetwork(n) ?? "", providerId, overrides);
+    if (ch) {
+      watchOn = n;
+      channel = ch;
+      break;
+    }
+  }
+  if (!watchOn) watchOn = networks[0];
+  const streaming = networks.find(
+    (n) =>
+      n !== watchOn &&
+      /app|\+|peacock|season pass|max|netflix|prime|dazn|paramount|\btv\b|\.tv/i.test(n),
+  );
+  return { watchOn, channel, streaming };
+}
+
 /** Fuzzy-match a free-text "Watch On" value to a known linear network name. */
 export function matchNetwork(watchOn?: string): string | undefined {
   if (!watchOn) return undefined;

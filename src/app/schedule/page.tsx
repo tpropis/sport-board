@@ -6,7 +6,7 @@ import { useStore, zoneLabel, sortByTvOrder, formatEventTime } from "@/lib/store
 import { SectionHeader, Pill, Toggle, DateStepper } from "@/components/ui";
 import type { ScheduleEvent, ScheduleResponse, EventState } from "@/lib/schedule/types";
 import { getMarket } from "@/lib/markets";
-import { channelFor, matchNetwork } from "@/lib/providers";
+import { pickBroadcast } from "@/lib/providers";
 import type { Assignment } from "@/lib/types";
 import { autoPrioritize } from "@/lib/priority";
 import { autoBuildAssignments } from "@/lib/autobuild";
@@ -106,10 +106,8 @@ export default function FullSchedule() {
   function sendToBoard(ev: ScheduleEvent) {
     const used = new Set(board.assignments.map((a) => a.tvNumber));
     const tv = activeBar.tvOrder.find((n) => !used.has(n)) ?? activeBar.tvOrder[0];
-    const network = ev.networks[0];
-    const streaming = ev.networks.find((n) => /app|\+|peacock|stream|season pass|max|tv$/i.test(n));
-    const ch = channelFor(
-      matchNetwork(network) ?? "",
+    const { watchOn, channel, streaming } = pickBroadcast(
+      ev.networks,
       activeBar.providerId,
       activeBar.channelOverrides?.[activeBar.providerId ?? ""],
     );
@@ -123,8 +121,8 @@ export default function FullSchedule() {
       sport: ev.sport,
       league: ev.league,
       startTime: fmtTime(ev.startUtc),
-      watchOn: network,
-      directvChannel: ch,
+      watchOn,
+      directvChannel: channel,
       streamingApp: streaming,
       device: "DIRECTV box",
       remote: "Main DIRECTV Remote",
