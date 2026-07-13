@@ -133,6 +133,7 @@ export interface Bar {
   soundRules: SoundRule[];
   localTeams: string[];
   market?: string; // market key (see lib/markets) derived from location
+  zip?: string; // ZIP code — the key for provider channel-lineup accuracy
   timezone?: string; // IANA timezone for the bar's location, e.g. America/New_York
   lat?: number;
   lng?: number;

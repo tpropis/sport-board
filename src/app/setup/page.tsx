@@ -437,6 +437,20 @@ function LocationMarket() {
             </p>
           </label>
 
+          <label className="block">
+            <span className="field-label">ZIP code (channel-lineup key)</span>
+            <input
+              className="input mt-1 max-w-[160px]"
+              value={activeBar.zip ?? ""}
+              placeholder="30303"
+              onChange={(e) => updateBar({ zip: e.target.value })}
+            />
+            <p className="mt-1 text-xs text-chalk-faint">
+              Cable/premium channel numbers are specific to your ZIP + provider.
+              Enter it here, then confirm the numbers on the Channel Guide.
+            </p>
+          </label>
+
           <div className="rounded-md border border-ink-700 bg-ink-900/50 p-3">
             <div className="field-label mb-2">
               Google Maps location (lat / lng)

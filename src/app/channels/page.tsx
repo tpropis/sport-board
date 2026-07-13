@@ -39,6 +39,7 @@ export default function ChannelGuide() {
   return (
     <div className="flex flex-col gap-6">
       <SectionHeader kicker="Configuration · Reference" title="Channel Guide">
+        {activeBar.zip && <Pill tone="neutral">ZIP {activeBar.zip}</Pill>}
         {provider && (
           <Pill tone={provider.type === "satellite" ? "signal" : "amber"}>
             {provider.name}

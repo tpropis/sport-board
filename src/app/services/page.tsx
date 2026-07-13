@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useStore } from "@/lib/store";
 import { SectionHeader, Toggle, Pill } from "@/components/ui";
 import type { Service } from "@/lib/types";
+import { coverageFor } from "@/lib/streaming";
 
 export default function ServicesPage() {
   const { activeBar, updateBar } = useStore();
@@ -147,12 +148,36 @@ export default function ServicesPage() {
                       onChange={(e) => update(s.id, { notes: e.target.value })}
                     />
                   </label>
+                  <ServiceCoverage name={s.name} />
                 </div>
               )}
             </div>
           );
         })}
       </div>
+    </div>
+  );
+}
+
+function ServiceCoverage({ name }: { name: string }) {
+  const info = coverageFor(name);
+  if (!info) return null;
+  return (
+    <div className="sm:col-span-2">
+      <div className="field-label mb-1.5">Carries (2026)</div>
+      <div className="flex flex-wrap gap-1.5">
+        {info.carries.map((c) => (
+          <span
+            key={c}
+            className="rounded-md border border-signal/30 bg-signal/10 px-2 py-0.5 text-xs text-signal"
+          >
+            {c}
+          </span>
+        ))}
+      </div>
+      {info.howTo && (
+        <p className="mt-1.5 text-xs text-chalk-faint">→ {info.howTo}</p>
+      )}
     </div>
   );
 }
