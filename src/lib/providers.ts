@@ -69,6 +69,13 @@ export const NETWORKS: string[] = [
   "FanDuel Sports South",
   "Telemundo",
   "Univision",
+  // Premium / special-event channels (require a sports package or add-on).
+  "MLB Home Run Derby",
+  "MLB Strike Zone",
+  "ESPN Bases Loaded",
+  "NBA League Pass",
+  "NHL Center Ice",
+  "MLB Extra Innings",
 ];
 
 /** Broadcast networks whose number follows the local affiliate (varies by market). */
@@ -81,6 +88,22 @@ export const LOCAL_NETWORKS = new Set([
   "Telemundo",
   "Univision",
 ]);
+
+/** Networks that need a premium package / add-on — bartenders should know. */
+export const PREMIUM_NETWORKS = new Set([
+  "MLB Home Run Derby",
+  "MLB Strike Zone",
+  "NFL RedZone",
+  "ESPN Bases Loaded",
+  "NBA League Pass",
+  "NHL Center Ice",
+  "MLB Extra Innings",
+  "NFL Sunday Ticket",
+]);
+
+export function isPremiumNetwork(network?: string): boolean {
+  return !!network && PREMIUM_NETWORKS.has(network);
+}
 
 type Lineup = Record<string, string>;
 
@@ -117,6 +140,15 @@ export const CHANNEL_LINEUP: Record<string, Lineup> = {
   "FanDuel Sports South": { directv: "646", dish: "418" },
   Telemundo: { directv: "" },
   Univision: { directv: "" },
+  // Premium / special-event channels. DIRECTV 9547 confirmed for the Home Run
+  // Derby; others seed the known DIRECTV number where it's a single channel and
+  // stay editable per bar (packages/markets vary).
+  "MLB Home Run Derby": { directv: "9547" },
+  "MLB Strike Zone": { directv: "717", dish: "719" },
+  "ESPN Bases Loaded": { directv: "" },
+  "NBA League Pass": { directv: "752" },
+  "NHL Center Ice": { directv: "769" },
+  "MLB Extra Innings": { directv: "718" },
 };
 
 export function getProvider(id?: string): Provider | undefined {

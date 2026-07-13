@@ -8,6 +8,7 @@ import {
   NETWORKS,
   CHANNEL_LINEUP,
   LOCAL_NETWORKS,
+  PREMIUM_NETWORKS,
   getProvider,
 } from "@/lib/providers";
 
@@ -110,6 +111,7 @@ export default function ChannelGuide() {
               const seeded = CHANNEL_LINEUP[n]?.[providerId];
               const override = overrides[n];
               const isLocal = LOCAL_NETWORKS.has(n);
+              const isPremium = PREMIUM_NETWORKS.has(n);
               return (
                 <div
                   key={n}
@@ -120,6 +122,14 @@ export default function ChannelGuide() {
                     {isLocal && (
                       <span className="rounded border border-ink-600 px-1.5 py-0.5 text-[9px] uppercase tracking-wider text-chalk-faint">
                         local
+                      </span>
+                    )}
+                    {isPremium && (
+                      <span
+                        className="rounded border border-amber-accent/50 bg-amber-accent/10 px-1.5 py-0.5 text-[9px] uppercase tracking-wider text-amber-glow"
+                        title="Requires a premium sports package / add-on"
+                      >
+                        ★ premium
                       </span>
                     )}
                     {override && (

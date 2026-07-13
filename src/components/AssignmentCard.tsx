@@ -4,7 +4,7 @@ import type { Assignment } from "@/lib/types";
 import { deriveLabels } from "@/lib/constants";
 import { LabelChip, TVBadge } from "./ui";
 import { useStore, zoneLabel } from "@/lib/store";
-import { getProvider } from "@/lib/providers";
+import { getProvider, isPremiumNetwork } from "@/lib/providers";
 import { useLive } from "@/lib/live";
 import type { EventState } from "@/lib/schedule/types";
 
@@ -135,6 +135,14 @@ export function AssignmentCard({
           </div>
 
           <div className="mt-3 flex flex-wrap items-center gap-2">
+            {isPremiumNetwork(a.watchOn) && (
+              <span
+                className="label-chip border-amber-accent/50 bg-amber-accent/15 text-amber-glow"
+                title="Requires a premium sports package"
+              >
+                ★ Premium pkg
+              </span>
+            )}
             <span
               className={`label-chip ${soundTone(a.soundRule)}`}
               title="Sound recommendation"
