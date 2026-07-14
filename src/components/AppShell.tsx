@@ -4,7 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
 import { useStore } from "@/lib/store";
-import { useSession } from "@/lib/session";
+import { useAccess } from "@/lib/access";
 import { LiveScheduleProvider } from "@/lib/live";
 import { AutoBuilder } from "./AutoBuilder";
 import { Logo } from "./Logo";
@@ -101,7 +101,7 @@ function BarSelector() {
 export function AppShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const { ready } = useStore();
-  const { user, isManager, logout } = useSession();
+  const { signedIn, isManager, name, role, signOut } = useAccess();
   const [mobileOpen, setMobileOpen] = useState(false);
 
   if (BARE_ROUTES.includes(pathname)) {
@@ -175,18 +175,18 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             </div>
           </div>
           <div className="flex items-center gap-3">
-            {user && (
+            {signedIn && (
               <div className="flex items-center gap-2.5">
                 <div className="hidden text-right leading-tight sm:block">
-                  <div className="text-sm font-semibold text-chalk">{user.name}</div>
+                  <div className="text-sm font-semibold text-chalk">{name}</div>
                   <div className="font-mono text-[10px] uppercase tracking-widest text-chalk-faint">
-                    {user.role}
+                    {role}
                   </div>
                 </div>
                 <span className="flex h-8 w-8 items-center justify-center rounded-full border border-ink-600 bg-ink-800 text-sm font-bold text-amber-glow">
-                  {user.name.charAt(0)}
+                  {(name || "?").charAt(0)}
                 </span>
-                <button onClick={logout} className="btn btn-ghost px-2.5 py-1.5 text-xs">
+                <button onClick={signOut} className="btn btn-ghost px-2.5 py-1.5 text-xs">
                   Sign out
                 </button>
               </div>
@@ -214,7 +214,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 }
 
 function ManagerGate() {
-  const { user, logout } = useSession();
+  const { name, role, signOut } = useAccess();
   return (
     <div className="flex min-h-[60vh] flex-col items-center justify-center gap-4 text-center">
       <div className="flex h-12 w-12 items-center justify-center rounded-lg border border-amber-accent/50 bg-amber-accent/10 text-2xl">
@@ -223,12 +223,12 @@ function ManagerGate() {
       <div>
         <h2 className="font-display text-xl font-bold text-chalk">Manager access required</h2>
         <p className="mt-1 max-w-sm text-sm text-chalk-dim">
-          You&apos;re signed in as <span className="font-semibold text-chalk">{user?.name}</span>{" "}
-          ({user?.role}). Editing &amp; configuration are limited to owners and managers.
+          You&apos;re signed in as <span className="font-semibold text-chalk">{name}</span>{" "}
+          ({role}). Editing &amp; configuration are limited to owners and managers.
           Sign in with a manager account to continue.
         </p>
       </div>
-      <button onClick={logout} className="btn btn-primary">
+      <button onClick={signOut} className="btn btn-primary">
         Switch account
       </button>
     </div>

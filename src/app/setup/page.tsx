@@ -11,6 +11,7 @@ import { BRAND_PRESETS, hexToChannels, lighten } from "@/lib/branding";
 import type { Branding } from "@/lib/types";
 import { useRef } from "react";
 import { useSession, type Role } from "@/lib/session";
+import { CLERK_ENABLED } from "@/lib/access";
 import Link from "next/link";
 
 function Card({
@@ -834,6 +835,21 @@ function BrandingCard() {
 }
 
 function AccountsCard() {
+  if (CLERK_ENABLED) {
+    return (
+      <Card title="Staff logins" hint="Manager accounts are handled by Clerk.">
+        <p className="text-sm text-chalk-dim">
+          Logins are managed in your <span className="font-semibold text-chalk">Clerk dashboard</span> →
+          Users. Invite your managers/owner there (restrict sign-ups via Clerk → Restrictions so
+          only your people can get in). Bartenders use the public Staff View link — no login.
+        </p>
+      </Card>
+    );
+  }
+  return <LocalAccountsCard />;
+}
+
+function LocalAccountsCard() {
   const { accounts, addAccount, updateAccount, removeAccount, user } = useSession();
   const [draft, setDraft] = useState({ name: "", username: "", password: "", role: "staff" as Role });
   const canManage = user?.role === "owner" || user?.role === "manager";

@@ -3,10 +3,8 @@ import { Inter, JetBrains_Mono } from "next/font/google";
 import "./globals.css";
 import { StoreProvider } from "@/lib/store";
 import { AppShell } from "@/components/AppShell";
-import { AuthProvider } from "@/lib/auth";
 import { ThemeApplier } from "@/components/ThemeApplier";
-import { SessionProvider } from "@/lib/session";
-import { AuthGate } from "@/components/AuthGate";
+import { AccessRoot } from "@/lib/access";
 
 const inter = Inter({
   subsets: ["latin"],
@@ -40,16 +38,12 @@ export default function RootLayout({
   return (
     <html lang="en" className={`${inter.variable} ${mono.variable}`}>
       <body>
-        <AuthProvider>
-          <StoreProvider>
-            <ThemeApplier />
-            <SessionProvider>
-              <AuthGate>
-                <AppShell>{children}</AppShell>
-              </AuthGate>
-            </SessionProvider>
-          </StoreProvider>
-        </AuthProvider>
+        <StoreProvider>
+          <ThemeApplier />
+          <AccessRoot>
+            <AppShell>{children}</AppShell>
+          </AccessRoot>
+        </StoreProvider>
       </body>
     </html>
   );
