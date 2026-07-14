@@ -10,6 +10,7 @@ import { PROVIDERS, getProvider } from "@/lib/providers";
 import { BRAND_PRESETS, hexToChannels, lighten } from "@/lib/branding";
 import type { Branding } from "@/lib/types";
 import { useRef } from "react";
+import { useSession, type Role } from "@/lib/session";
 import Link from "next/link";
 
 function Card({
@@ -197,6 +198,8 @@ export default function BarSetup() {
 
       {/* Location & market */}
       <BrandingCard />
+
+      <AccountsCard />
 
       <LocationMarket />
 
@@ -826,6 +829,114 @@ function BrandingCard() {
           </div>
         </div>
       </div>
+    </Card>
+  );
+}
+
+function AccountsCard() {
+  const { accounts, addAccount, updateAccount, removeAccount, user } = useSession();
+  const [draft, setDraft] = useState({ name: "", username: "", password: "", role: "staff" as Role });
+  const canManage = user?.role === "owner" || user?.role === "manager";
+
+  return (
+    <Card
+      title="Staff logins"
+      hint="Who can sign in and what they can do. Owners & managers get full access; staff see the board read-only."
+    >
+      {!canManage ? (
+        <p className="text-sm text-chalk-faint">Only owners and managers can manage logins.</p>
+      ) : (
+        <div className="flex flex-col gap-2">
+          {accounts.map((a) => (
+            <div
+              key={a.id}
+              className="flex flex-wrap items-center gap-2 rounded-md border border-ink-700 bg-ink-900/50 p-3"
+            >
+              <span className="flex h-8 w-8 items-center justify-center rounded-full border border-ink-600 bg-ink-800 text-sm font-bold text-amber-glow">
+                {a.name.charAt(0)}
+              </span>
+              <input
+                className="input max-w-[140px]"
+                value={a.name}
+                onChange={(e) => updateAccount(a.id, { name: e.target.value })}
+              />
+              <input
+                className="input max-w-[120px] font-mono"
+                value={a.username}
+                onChange={(e) => updateAccount(a.id, { username: e.target.value })}
+                placeholder="username"
+              />
+              <input
+                className="input max-w-[120px] font-mono"
+                value={a.password}
+                onChange={(e) => updateAccount(a.id, { password: e.target.value })}
+                placeholder="password"
+              />
+              <select
+                className="input max-w-[120px]"
+                value={a.role}
+                onChange={(e) => updateAccount(a.id, { role: e.target.value as Role })}
+              >
+                <option value="owner">Owner</option>
+                <option value="manager">Manager</option>
+                <option value="staff">Staff</option>
+              </select>
+              <button
+                onClick={() => removeAccount(a.id)}
+                disabled={a.id === user?.id}
+                className="btn btn-danger px-2.5 py-1.5 disabled:opacity-30"
+                title={a.id === user?.id ? "You can't remove your own account" : "Remove"}
+              >
+                ✕
+              </button>
+            </div>
+          ))}
+
+          <div className="mt-2 flex flex-wrap items-end gap-2 rounded-md border border-dashed border-ink-600 p-3">
+            <input
+              className="input max-w-[140px]"
+              placeholder="Name"
+              value={draft.name}
+              onChange={(e) => setDraft({ ...draft, name: e.target.value })}
+            />
+            <input
+              className="input max-w-[120px] font-mono"
+              placeholder="username"
+              value={draft.username}
+              onChange={(e) => setDraft({ ...draft, username: e.target.value })}
+            />
+            <input
+              className="input max-w-[120px] font-mono"
+              placeholder="password"
+              value={draft.password}
+              onChange={(e) => setDraft({ ...draft, password: e.target.value })}
+            />
+            <select
+              className="input max-w-[120px]"
+              value={draft.role}
+              onChange={(e) => setDraft({ ...draft, role: e.target.value as Role })}
+            >
+              <option value="staff">Staff</option>
+              <option value="manager">Manager</option>
+              <option value="owner">Owner</option>
+            </select>
+            <button
+              className="btn btn-primary"
+              disabled={!draft.name || !draft.username || !draft.password}
+              onClick={() => {
+                addAccount(draft);
+                setDraft({ name: "", username: "", password: "", role: "staff" });
+              }}
+            >
+              + Add login
+            </button>
+          </div>
+          <p className="mt-1 text-xs text-chalk-faint">
+            Passwords are stored on this device for the MVP gate. For real multi-device
+            logins, wire Clerk (keys in the deploy environment).
+          </p>
+        </div>
+      )}
     </Card>
   );
 }

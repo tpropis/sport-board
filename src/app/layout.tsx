@@ -5,6 +5,8 @@ import { StoreProvider } from "@/lib/store";
 import { AppShell } from "@/components/AppShell";
 import { AuthProvider } from "@/lib/auth";
 import { ThemeApplier } from "@/components/ThemeApplier";
+import { SessionProvider } from "@/lib/session";
+import { AuthGate } from "@/components/AuthGate";
 
 const inter = Inter({
   subsets: ["latin"],
@@ -41,7 +43,11 @@ export default function RootLayout({
         <AuthProvider>
           <StoreProvider>
             <ThemeApplier />
-            <AppShell>{children}</AppShell>
+            <SessionProvider>
+              <AuthGate>
+                <AppShell>{children}</AppShell>
+              </AuthGate>
+            </SessionProvider>
           </StoreProvider>
         </AuthProvider>
       </body>
