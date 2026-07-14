@@ -50,6 +50,22 @@ export default function TodaysBoard() {
   const providerName = getProvider(activeBar.providerId)?.name ?? "Channel";
   const tz = zoneLabel(activeBar.timezone);
 
+  // Room audio: one game's audio plays for the whole bar. Setting it applies to
+  // every TV showing that game and mutes the rest (staff can still override a
+  // single TV in the editor).
+  const audioGame =
+    assignments.find((a) => !a.filler && a.soundRule === "Main audio recommended")?.eventName ?? null;
+  function setRoomAudio(name: string | null) {
+    const updated = board.assignments.map((a) => ({
+      ...a,
+      soundRule:
+        !a.filler && name && a.eventName === name
+          ? ("Main audio recommended" as const)
+          : ("Music stays on" as const),
+    }));
+    saveBoard({ ...board, assignments: updated });
+  }
+
   const fmtTime = (iso: string) => formatEventTime(iso, activeBar.timezone);
 
   function autoBuild() {
@@ -100,6 +116,28 @@ export default function TodaysBoard() {
 
       <BoardLiveAlerts assignments={assignments} />
 
+      {assignments.some((a) => !a.filler) && (
+        <div className="panel flex flex-wrap items-center gap-3 p-3">
+          <span className="text-lg">🔊</span>
+          <span className="field-label">Room audio</span>
+          {audioGame ? (
+            <>
+              <span className="rounded-md border border-signal/50 bg-signal/10 px-2.5 py-1 text-sm font-semibold text-signal">
+                {audioGame}
+              </span>
+              <span className="text-sm text-chalk-dim">on across all its TVs · everything else on music</span>
+              <button onClick={() => setRoomAudio(null)} className="btn btn-ghost ml-auto px-3 py-1.5 text-xs">
+                Music only
+              </button>
+            </>
+          ) : (
+            <span className="text-sm text-chalk-dim">
+              Music only — tap the 🔊 on any game to put its audio on every TV showing it.
+            </span>
+          )}
+        </div>
+      )}
+
       {assignments.length === 0 ? (
         <div className="panel flex flex-col items-center gap-4 p-10 text-center">
           <div>
@@ -127,7 +165,14 @@ export default function TodaysBoard() {
           </div>
         </div>
       ) : view === "byTv" ? (
-        <ByTvView assignments={assignments} tvOrder={activeBar.tvOrder} providerName={providerName} tz={tz} />
+        <ByTvView
+          assignments={assignments}
+          tvOrder={activeBar.tvOrder}
+          providerName={providerName}
+          tz={tz}
+          audioGame={audioGame}
+          onSetAudio={setRoomAudio}
+        />
       ) : view === "cards" ? (
         <div className="grid gap-3 lg:grid-cols-2">
           {assignments.map((a) => (
@@ -329,11 +374,15 @@ function ByTvView({
   tvOrder,
   providerName,
   tz,
+  audioGame,
+  onSetAudio,
 }: {
   assignments: Assignment[];
   tvOrder: number[];
   providerName: string;
   tz: string;
+  audioGame: string | null;
+  onSetAudio: (name: string | null) => void;
 }) {
   const { activeBar } = useStore();
   // Group by TV, in wall order; each TV shows its games in time order.
@@ -370,7 +419,14 @@ function ByTvView({
           </div>
           <div className="divide-y divide-ink-700/60">
             {games.map((a) => (
-              <GameRow key={a.id} a={a} providerName={providerName} tz={tz} />
+              <GameRow
+                key={a.id}
+                a={a}
+                providerName={providerName}
+                tz={tz}
+                audioGame={audioGame}
+                onSetAudio={onSetAudio}
+              />
             ))}
           </div>
         </div>
@@ -379,10 +435,23 @@ function ByTvView({
   );
 }
 
-function GameRow({ a, providerName, tz }: { a: Assignment; providerName: string; tz: string }) {
+function GameRow({
+  a,
+  providerName,
+  tz,
+  audioGame,
+  onSetAudio,
+}: {
+  a: Assignment;
+  providerName: string;
+  tz: string;
+  audioGame: string | null;
+  onSetAudio: (name: string | null) => void;
+}) {
   const { activeBar } = useStore();
   const live = useLive()?.lookup(a.eventId, a.eventName);
   const [open, setOpen] = useState(false);
+  const isAudio = !a.filler && audioGame === a.eventName;
 
   const matchup = a.team1 && a.team2 ? `${a.team1} vs ${a.team2}` : a.eventName;
   const real = !/^(tbd|tba|undecided)$/i.test((a.team1 ?? "").trim());
@@ -393,44 +462,62 @@ function GameRow({ a, providerName, tz }: { a: Assignment; providerName: string;
 
   return (
     <div className={a.filler ? "bg-ink-900/40" : ""}>
-      <button
-        onClick={() => setOpen((v) => !v)}
-        className="flex w-full items-start gap-3 px-3 py-2.5 text-left hover:bg-ink-800/40"
-      >
-        <div className="w-16 shrink-0">
-          <div className={`tnum font-mono text-sm font-bold ${a.filler ? "text-chalk-faint" : "text-amber-glow"}`}>
-            {a.startTime === "12:00 AM" ? "All day" : a.startTime || "—"}
-          </div>
-          {tz && a.startTime && a.startTime !== "12:00 AM" && (
-            <div className="font-mono text-[9px] uppercase text-chalk-faint">{tz}</div>
-          )}
-        </div>
-        <div className="min-w-0 flex-1">
-          <div className="flex items-center gap-2">
-            <span className={`truncate font-semibold ${a.filler ? "text-chalk-dim" : "text-chalk"}`}>
-              {title}
-            </span>
-            {a.filler && (
-              <span className="shrink-0 rounded border border-ink-600 px-1.5 py-0.5 text-[9px] uppercase tracking-wider text-chalk-faint">
-                filler
-              </span>
-            )}
-            {live && live.status.state !== "pre" && (
-              <span className="shrink-0 rounded bg-signal/15 px-1.5 py-0.5 text-[10px] font-semibold text-signal">
-                {live.status.state === "in" && live.status.clock ? live.status.clock : live.status.detail}
-                {live.score1 != null ? ` ${live.score1}–${live.score2}` : ""}
-              </span>
+      <div className="flex items-start gap-2 px-3 py-2.5 hover:bg-ink-800/40">
+        <button
+          onClick={() => setOpen((v) => !v)}
+          className="flex min-w-0 flex-1 items-start gap-3 text-left"
+        >
+          <div className="w-16 shrink-0">
+            <div className={`tnum font-mono text-sm font-bold ${a.filler ? "text-chalk-faint" : "text-amber-glow"}`}>
+              {a.startTime === "12:00 AM" ? "All day" : a.startTime || "—"}
+            </div>
+            {tz && a.startTime && a.startTime !== "12:00 AM" && (
+              <div className="font-mono text-[9px] uppercase text-chalk-faint">{tz}</div>
             )}
           </div>
-          <div className="truncate text-xs text-chalk-dim">
-            {a.watchOn}
-            {a.directvChannel ? ` · ${providerName} ${a.directvChannel}` : ""}
-            {a.streamingApp ? ` · ${a.streamingApp}` : ""}
+          <div className="min-w-0 flex-1">
+            <div className="flex items-center gap-2">
+              <span className={`truncate font-semibold ${a.filler ? "text-chalk-dim" : "text-chalk"}`}>
+                {title}
+              </span>
+              {a.filler && (
+                <span className="shrink-0 rounded border border-ink-600 px-1.5 py-0.5 text-[9px] uppercase tracking-wider text-chalk-faint">
+                  filler
+                </span>
+              )}
+              {live && live.status.state !== "pre" && (
+                <span className="shrink-0 rounded bg-signal/15 px-1.5 py-0.5 text-[10px] font-semibold text-signal">
+                  {live.status.state === "in" && live.status.clock ? live.status.clock : live.status.detail}
+                  {live.score1 != null ? ` ${live.score1}–${live.score2}` : ""}
+                </span>
+              )}
+            </div>
+            <div className="truncate text-xs text-chalk-dim">
+              {a.watchOn}
+              {a.directvChannel ? ` · ${providerName} ${a.directvChannel}` : ""}
+              {a.streamingApp ? ` · ${a.streamingApp}` : ""}
+            </div>
+            <div className="mt-0.5 text-[11px] text-chalk-faint">🔊 {a.soundRule}</div>
           </div>
-          <div className="mt-0.5 text-[11px] text-chalk-faint">🔊 {a.soundRule}</div>
-        </div>
-        <span className="mt-1 shrink-0 text-chalk-faint">{open ? "▲" : "▼"}</span>
-      </button>
+        </button>
+
+        {!a.filler && (
+          <button
+            onClick={() => onSetAudio(isAudio ? null : a.eventName)}
+            title={isAudio ? "Audio on — tap to mute (back to music)" : "Put this game's audio on every TV showing it"}
+            className={`mt-0.5 shrink-0 rounded-md border px-2 py-1 text-xs font-bold ${
+              isAudio
+                ? "border-signal/60 bg-signal/20 text-signal"
+                : "border-ink-600 bg-ink-800 text-chalk-faint hover:text-chalk-dim"
+            }`}
+          >
+            {isAudio ? "🔊 ON" : "🔈"}
+          </button>
+        )}
+        <button onClick={() => setOpen((v) => !v)} className="mt-1 shrink-0 text-chalk-faint">
+          {open ? "▲" : "▼"}
+        </button>
+      </div>
 
       {open && (
         <div className="space-y-2.5 border-t border-ink-700/60 bg-ink-950/40 px-3 py-3 text-xs">
