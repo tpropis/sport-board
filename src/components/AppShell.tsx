@@ -8,6 +8,7 @@ import { Toggle } from "./ui";
 import { AuthButton, useIsManager, CLERK_ENABLED } from "@/lib/auth";
 import { LiveScheduleProvider } from "@/lib/live";
 import { AutoBuilder } from "./AutoBuilder";
+import { Logo } from "./Logo";
 
 // Routes that require manager access (editing & configuration).
 const MANAGER_ROUTES = [
@@ -52,9 +53,7 @@ function Wordmark() {
           className="h-9 w-9 rounded-md border border-ink-600 object-contain"
         />
       ) : (
-        <span className="flex h-8 w-8 items-center justify-center rounded-md border border-amber-accent/50 bg-amber-accent/10">
-          <span className="block h-3.5 w-3.5 rounded-[3px] bg-amber-accent shadow-[0_0_10px_2px_rgba(var(--brand-accent)/0.5)]" />
-        </span>
+        <Logo className="h-9 w-9 text-amber-accent" />
       )}
       <span className="leading-none">
         <span className="block font-display text-[15px] font-extrabold tracking-tight text-chalk">
