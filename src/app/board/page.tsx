@@ -50,19 +50,35 @@ export default function TodaysBoard() {
   const providerName = getProvider(activeBar.providerId)?.name ?? "Channel";
   const tz = zoneLabel(activeBar.timezone);
 
-  // Room audio: one game's audio plays for the whole bar. Setting it applies to
-  // every TV showing that game and mutes the rest (staff can still override a
-  // single TV in the editor).
-  const audioGame =
-    assignments.find((a) => !a.filler && a.soundRule === "Main audio recommended")?.eventName ?? null;
-  function setRoomAudio(name: string | null) {
-    const updated = board.assignments.map((a) => ({
-      ...a,
-      soundRule:
-        !a.filler && name && a.eventName === name
-          ? ("Main audio recommended" as const)
-          : ("Music stays on" as const),
-    }));
+  // Audio zones: each zone (Main Bar, Patio…) plays one game's audio. Setting a
+  // zone's audio applies to every TV in that zone showing the game and mutes the
+  // zone's others; other zones are untouched. Staff can still override one TV.
+  const zones =
+    activeBar.zones && activeBar.zones.length
+      ? activeBar.zones
+      : [{ id: "z-main", name: "Main Bar" }];
+  const zoneOf = (tvNumber: number) => {
+    const z = activeBar.tvs.find((t) => t.number === tvNumber)?.zoneId;
+    return z && zones.some((x) => x.id === z) ? z : zones[0].id;
+  };
+  const audioByZone: Record<string, string | null> = {};
+  zones.forEach((z) => (audioByZone[z.id] = null));
+  assignments.forEach((a) => {
+    if (!a.filler && a.soundRule === "Main audio recommended")
+      audioByZone[zoneOf(a.tvNumber)] = a.eventName;
+  });
+  function setRoomAudio(name: string | null, zoneId: string) {
+    const updated = board.assignments.map((a) =>
+      zoneOf(a.tvNumber) !== zoneId
+        ? a
+        : {
+            ...a,
+            soundRule:
+              !a.filler && name && a.eventName === name
+                ? ("Main audio recommended" as const)
+                : ("Music stays on" as const),
+          },
+    );
     saveBoard({ ...board, assignments: updated });
   }
 
@@ -117,24 +133,46 @@ export default function TodaysBoard() {
       <BoardLiveAlerts assignments={assignments} />
 
       {assignments.some((a) => !a.filler) && (
-        <div className="panel flex flex-wrap items-center gap-3 p-3">
-          <span className="text-lg">🔊</span>
-          <span className="field-label">Room audio</span>
-          {audioGame ? (
-            <>
-              <span className="rounded-md border border-signal/50 bg-signal/10 px-2.5 py-1 text-sm font-semibold text-signal">
-                {audioGame}
+        <div className="panel flex flex-col gap-2 p-3">
+          <div className="flex items-center gap-2">
+            <span className="text-lg">🔊</span>
+            <span className="field-label">Room audio by zone</span>
+            {zones.length > 1 && (
+              <span className="text-xs text-chalk-faint">
+                each zone plays its own game · tap 🔈 on a game to switch a zone
               </span>
-              <span className="text-sm text-chalk-dim">on across all its TVs · everything else on music</span>
-              <button onClick={() => setRoomAudio(null)} className="btn btn-ghost ml-auto px-3 py-1.5 text-xs">
-                Music only
-              </button>
-            </>
-          ) : (
-            <span className="text-sm text-chalk-dim">
-              Music only — tap the 🔊 on any game to put its audio on every TV showing it.
-            </span>
-          )}
+            )}
+          </div>
+          <div className="flex flex-wrap gap-2">
+            {zones.map((z) => {
+              const on = audioByZone[z.id];
+              return (
+                <div
+                  key={z.id}
+                  className="flex flex-1 items-center gap-2 rounded-md border border-ink-700 bg-ink-900/50 px-3 py-2"
+                >
+                  <span className="font-mono text-[10px] uppercase tracking-widest text-chalk-faint">
+                    {z.name}
+                  </span>
+                  {on ? (
+                    <>
+                      <span className="rounded-md border border-signal/50 bg-signal/10 px-2.5 py-1 text-sm font-semibold text-signal">
+                        {on}
+                      </span>
+                      <button
+                        onClick={() => setRoomAudio(null, z.id)}
+                        className="btn btn-ghost ml-auto px-2.5 py-1 text-xs"
+                      >
+                        Music only
+                      </button>
+                    </>
+                  ) : (
+                    <span className="text-sm text-chalk-dim">Music only</span>
+                  )}
+                </div>
+              );
+            })}
+          </div>
         </div>
       )}
 
@@ -170,7 +208,9 @@ export default function TodaysBoard() {
           tvOrder={activeBar.tvOrder}
           providerName={providerName}
           tz={tz}
-          audioGame={audioGame}
+          zones={zones}
+          zoneOf={zoneOf}
+          audioByZone={audioByZone}
           onSetAudio={setRoomAudio}
         />
       ) : view === "cards" ? (
@@ -374,15 +414,19 @@ function ByTvView({
   tvOrder,
   providerName,
   tz,
-  audioGame,
+  zones,
+  zoneOf,
+  audioByZone,
   onSetAudio,
 }: {
   assignments: Assignment[];
   tvOrder: number[];
   providerName: string;
   tz: string;
-  audioGame: string | null;
-  onSetAudio: (name: string | null) => void;
+  zones: { id: string; name: string }[];
+  zoneOf: (tvNumber: number) => string;
+  audioByZone: Record<string, string | null>;
+  onSetAudio: (name: string | null, zoneId: string) => void;
 }) {
   const { activeBar } = useStore();
   // Group by TV, in wall order; each TV shows its games in time order.
@@ -390,47 +434,82 @@ function ByTvView({
     .map((n) => ({
       tv: n,
       main: !!activeBar.tvs.find((t) => t.number === n)?.main,
+      zoneId: zoneOf(n),
       games: assignments.filter((a) => a.tvNumber === n),
     }))
     .filter((g) => g.games.length > 0);
 
+  // Only show a zone header row when there's more than one zone in play.
+  const multiZone = zones.length > 1;
+
   return (
-    <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
-      {byTv.map(({ tv, main, games }) => (
-        <div
-          key={tv}
-          className={`panel overflow-hidden ${main ? "ring-1 ring-amber-accent/40" : ""}`}
-        >
-          <div className="flex items-center gap-2 border-b border-ink-700 bg-ink-900/60 px-3 py-2">
-            <TVBadge number={tv} size="sm" />
-            <span className="font-mono text-[11px] uppercase tracking-widest text-chalk-faint">
-              TV {tv}
-            </span>
-            {main && (
-              <span className="rounded-full border border-amber-accent/50 bg-amber-accent/15 px-2 py-0.5 text-[9px] font-bold uppercase tracking-wider text-amber-glow">
-                ★ Main
-              </span>
+    <div className="flex flex-col gap-5">
+      {zones.map((zone) => {
+        const tvsInZone = byTv.filter((g) => g.zoneId === zone.id);
+        if (tvsInZone.length === 0) return null;
+        const on = audioByZone[zone.id];
+        return (
+          <div key={zone.id} className="flex flex-col gap-3">
+            {multiZone && (
+              <div className="flex flex-wrap items-center gap-2 border-b border-ink-700 pb-1.5">
+                <span className="font-display text-sm font-bold uppercase tracking-widest text-chalk-dim">
+                  {zone.name}
+                </span>
+                <span className="text-xs text-chalk-faint">
+                  {tvsInZone.length} TV{tvsInZone.length > 1 ? "s" : ""}
+                </span>
+                {on ? (
+                  <span className="rounded-full border border-signal/50 bg-signal/10 px-2.5 py-0.5 text-xs font-semibold text-signal">
+                    🔊 {on}
+                  </span>
+                ) : (
+                  <span className="rounded-full border border-ink-600 bg-ink-800 px-2.5 py-0.5 text-xs text-chalk-faint">
+                    🔈 Music only
+                  </span>
+                )}
+              </div>
             )}
-            {games.length > 1 && (
-              <span className="ml-auto rounded-full border border-ink-600 bg-ink-800 px-2 py-0.5 text-[10px] font-semibold text-chalk-dim">
-                {games.length} today
-              </span>
-            )}
+            <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+              {tvsInZone.map(({ tv, main, zoneId, games }) => (
+                <div
+                  key={tv}
+                  className={`panel overflow-hidden ${main ? "ring-1 ring-amber-accent/40" : ""}`}
+                >
+                  <div className="flex items-center gap-2 border-b border-ink-700 bg-ink-900/60 px-3 py-2">
+                    <TVBadge number={tv} size="sm" />
+                    <span className="font-mono text-[11px] uppercase tracking-widest text-chalk-faint">
+                      TV {tv}
+                    </span>
+                    {main && (
+                      <span className="rounded-full border border-amber-accent/50 bg-amber-accent/15 px-2 py-0.5 text-[9px] font-bold uppercase tracking-wider text-amber-glow">
+                        ★ Main
+                      </span>
+                    )}
+                    {games.length > 1 && (
+                      <span className="ml-auto rounded-full border border-ink-600 bg-ink-800 px-2 py-0.5 text-[10px] font-semibold text-chalk-dim">
+                        {games.length} today
+                      </span>
+                    )}
+                  </div>
+                  <div className="divide-y divide-ink-700/60">
+                    {games.map((a) => (
+                      <GameRow
+                        key={a.id}
+                        a={a}
+                        providerName={providerName}
+                        tz={tz}
+                        zoneId={zoneId}
+                        audioByZone={audioByZone}
+                        onSetAudio={onSetAudio}
+                      />
+                    ))}
+                  </div>
+                </div>
+              ))}
+            </div>
           </div>
-          <div className="divide-y divide-ink-700/60">
-            {games.map((a) => (
-              <GameRow
-                key={a.id}
-                a={a}
-                providerName={providerName}
-                tz={tz}
-                audioGame={audioGame}
-                onSetAudio={onSetAudio}
-              />
-            ))}
-          </div>
-        </div>
-      ))}
+        );
+      })}
     </div>
   );
 }
@@ -439,19 +518,21 @@ function GameRow({
   a,
   providerName,
   tz,
-  audioGame,
+  zoneId,
+  audioByZone,
   onSetAudio,
 }: {
   a: Assignment;
   providerName: string;
   tz: string;
-  audioGame: string | null;
-  onSetAudio: (name: string | null) => void;
+  zoneId: string;
+  audioByZone: Record<string, string | null>;
+  onSetAudio: (name: string | null, zoneId: string) => void;
 }) {
   const { activeBar } = useStore();
   const live = useLive()?.lookup(a.eventId, a.eventName);
   const [open, setOpen] = useState(false);
-  const isAudio = !a.filler && audioGame === a.eventName;
+  const isAudio = !a.filler && audioByZone[zoneId] === a.eventName;
 
   const matchup = a.team1 && a.team2 ? `${a.team1} vs ${a.team2}` : a.eventName;
   const real = !/^(tbd|tba|undecided)$/i.test((a.team1 ?? "").trim());
@@ -503,7 +584,7 @@ function GameRow({
 
         {!a.filler && (
           <button
-            onClick={() => onSetAudio(isAudio ? null : a.eventName)}
+            onClick={() => onSetAudio(isAudio ? null : a.eventName, zoneId)}
             title={isAudio ? "Audio on — tap to mute (back to music)" : "Put this game's audio on every TV showing it"}
             className={`mt-0.5 shrink-0 rounded-md border px-2 py-1 text-xs font-bold ${
               isAudio

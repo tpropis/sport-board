@@ -129,12 +129,18 @@ function buildBar(): Bar {
       description: TV_DESCRIPTIONS[number],
       // The center screens are the main/priority TVs — big games land here.
       main: number === 5 || number === 9,
+      // Main bar zone for the run of center TVs; the right end is its own zone.
+      zoneId: number === 7 || number === 8 ? "z-back" : "z-main",
       defaultDevice: "DIRECTV box",
       defaultRemote: "Main DIRECTV Remote",
       defaultInput: "HDMI 1",
       ignored: false,
       notes: undefined,
     })),
+    zones: [
+      { id: "z-main", name: "Main Bar" },
+      { id: "z-back", name: "Back Bar" },
+    ],
     devices: [
       { id: "dev-directv", name: "DIRECTV box", type: "DIRECTV box", notes: "Drives every TV by default." },
       { id: "dev-appletv", name: "Apple TV", type: "Apple TV", notes: "BravesVision app, MLB, Peacock." },

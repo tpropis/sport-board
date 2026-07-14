@@ -4,7 +4,7 @@ import { useState } from "react";
 import { useStore, US_TIMEZONES, zoneLabel } from "@/lib/store";
 import { SectionHeader, TVBadge, Toggle } from "@/components/ui";
 import { SOUND_OPTIONS } from "@/lib/types";
-import type { Device, Remote, SoundRuleValue, TV } from "@/lib/types";
+import type { Device, Remote, SoundRuleValue, TV, Zone } from "@/lib/types";
 import { MARKETS, getMarket, nearestMarket } from "@/lib/markets";
 import { PROVIDERS, getProvider } from "@/lib/providers";
 import { BRAND_PRESETS, hexToChannels, lighten } from "@/lib/branding";
@@ -81,6 +81,23 @@ export default function BarSetup() {
     updateBar({
       tvOrder: activeBar.tvOrder.filter((x) => x !== number),
       tvs: activeBar.tvs.filter((t) => t.number !== number),
+    });
+  }
+
+  const zones = activeBar.zones ?? [];
+
+  function addZone() {
+    const z: Zone = { id: `z-${Date.now()}`, name: `Zone ${zones.length + 1}` };
+    updateBar({ zones: [...zones, z] });
+  }
+  function updateZone(id: string, patch: Partial<Zone>) {
+    updateBar({ zones: zones.map((z) => (z.id === id ? { ...z, ...patch } : z)) });
+  }
+  function removeZone(id: string) {
+    updateBar({
+      zones: zones.filter((z) => z.id !== id),
+      // Un-assign any TVs that pointed at the removed zone.
+      tvs: activeBar.tvs.map((t) => (t.zoneId === id ? { ...t, zoneId: undefined } : t)),
     });
   }
 
@@ -204,6 +221,49 @@ export default function BarSetup() {
 
       <LocationMarket />
 
+      {/* Audio zones */}
+      <Card
+        title="Audio zones"
+        hint="Group your TVs into areas that each run their own room audio — e.g. Main Bar, Patio, Back Bar. On the board, every zone plays one game's sound independently. Assign each TV to a zone below in the TVs list."
+      >
+        <div className="flex flex-col gap-2">
+          {zones.map((z) => {
+            const count = activeBar.tvs.filter((t) => t.zoneId === z.id).length;
+            return (
+              <div
+                key={z.id}
+                className="flex flex-wrap items-center gap-3 rounded-md border border-ink-700 bg-ink-900/50 p-3"
+              >
+                <span className="text-lg">🔊</span>
+                <input
+                  className="input min-w-[180px] flex-1"
+                  value={z.name}
+                  placeholder="Zone name"
+                  onChange={(e) => updateZone(z.id, { name: e.target.value })}
+                />
+                <span className="rounded-full border border-ink-600 bg-ink-800 px-2.5 py-0.5 text-xs font-semibold text-chalk-dim">
+                  {count} TV{count === 1 ? "" : "s"}
+                </span>
+                <button onClick={() => removeZone(z.id)} className="btn btn-danger px-2.5 py-1.5">
+                  Remove
+                </button>
+              </div>
+            );
+          })}
+          {zones.length === 0 && (
+            <p className="text-sm text-chalk-faint">
+              No zones yet — the whole bar shares one room audio. Add a zone to run
+              separate audio for different areas.
+            </p>
+          )}
+        </div>
+        <div className="mt-3">
+          <button onClick={addZone} className="btn btn-primary">
+            + Add zone
+          </button>
+        </div>
+      </Card>
+
       {/* TV order & descriptions */}
       <Card
         title="TVs · order, main screens & descriptions"
@@ -251,6 +311,21 @@ export default function BarSetup() {
                 >
                   {tv.main ? "★ Main" : "☆ Main"}
                 </button>
+                {zones.length > 0 && (
+                  <select
+                    className="input max-w-[140px] text-sm"
+                    value={tv.zoneId ?? ""}
+                    onChange={(e) => updateTv(n, { zoneId: e.target.value || undefined })}
+                    title="Audio zone this TV belongs to"
+                  >
+                    <option value="">— zone —</option>
+                    {zones.map((z) => (
+                      <option key={z.id} value={z.id}>
+                        {z.name}
+                      </option>
+                    ))}
+                  </select>
+                )}
                 <label className="flex items-center gap-2 text-xs text-chalk-dim">
                   <input
                     type="checkbox"

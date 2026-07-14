@@ -25,11 +25,17 @@ export type AssignmentLabel =
   | "CONFIRMED"
   | "NEEDS CHECK";
 
+export interface Zone {
+  id: string;
+  name: string; // e.g. "Main Bar", "Patio", "Back Bar"
+}
+
 export interface TV {
   number: number;
   position: number;
   description: string;
   main?: boolean; // priority / main screen (center or large) — gets the big games
+  zoneId?: string; // audio/area zone this TV belongs to
   defaultDevice?: string;
   defaultRemote?: string;
   defaultInput?: string;
@@ -127,6 +133,7 @@ export interface Bar {
   location: string;
   tvOrder: number[];
   tvs: TV[];
+  zones?: Zone[]; // audio/area zones — each has its own room audio
   devices: Device[];
   remotes: Remote[];
   services: Service[];
