@@ -19,8 +19,8 @@ export interface Account {
   role: Role;
 }
 
-const ACCOUNTS_KEY = "gb-accounts:v1";
-const SESSION_KEY = "gb-session:v1";
+const ACCOUNTS_KEY = "gb-accounts:v2";
+const SESSION_KEY = "gb-session:v2";
 
 /** Seeded logins for Hooligans (the single client). The owner manages these in
  *  Bar Setup. This is a simple built-in gate for the MVP — Clerk is the
@@ -29,7 +29,7 @@ function seedAccounts(): Account[] {
   return [
     { id: "owner", username: "owner", password: "hooligans", name: "Owner", role: "owner" },
     { id: "manager", username: "manager", password: "hooligans", name: "Manager", role: "manager" },
-    { id: "staff", username: "staff", password: "staff", name: "Bartender", role: "staff" },
+    { id: "bartender", username: "bartender", password: "hooligans", name: "Bartender", role: "staff" },
   ];
 }
 

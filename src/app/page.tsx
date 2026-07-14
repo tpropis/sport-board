@@ -5,6 +5,7 @@ import { useStore, zoneLabel, sortByTvOrder } from "@/lib/store";
 import { matchupTitle } from "@/lib/constants";
 import { LayoutViewer } from "@/components/PhotoMapper";
 import { TVBadge, Pill } from "@/components/ui";
+import { Quip } from "@/components/Quip";
 
 function formatLong(iso: string): string {
   const [y, m, d] = iso.split("-").map(Number);
@@ -42,6 +43,7 @@ export default function CommandCenter() {
               {formatLong(today)}
               {tz && <span className="text-chalk-faint"> · all times {tz}</span>}
             </p>
+            <Quip className="mt-2 block min-h-[1.5rem] text-sm italic text-amber-glow/90" />
 
             <div className="mt-5 flex flex-wrap gap-2.5">
               <Pill tone={board.published ? "signal" : "amber"}>

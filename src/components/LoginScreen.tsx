@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useSession } from "@/lib/session";
 import { useStore } from "@/lib/store";
 import { Logo } from "./Logo";
+import { Quip } from "./Quip";
 
 export function LoginScreen() {
   const { login } = useSession();
@@ -43,6 +44,7 @@ export function LoginScreen() {
           <p className="mt-1 font-mono text-[11px] uppercase tracking-[0.25em] text-chalk-faint">
             {activeBar?.name ?? "TV Command Board"}
           </p>
+          <Quip className="mt-4 block min-h-[2.5rem] max-w-xs text-sm italic text-amber-glow/90" />
         </div>
 
         <form onSubmit={submit} className="panel flex flex-col gap-3 p-5">
@@ -84,11 +86,11 @@ export function LoginScreen() {
         <div className="mt-4 rounded-md border border-ink-700 bg-ink-900/50 px-4 py-3 text-xs text-chalk-faint">
           <div className="mb-1 font-semibold text-chalk-dim">Demo logins</div>
           <div className="tnum font-mono">
-            owner / hooligans · manager / hooligans · staff / staff
+            owner / hooligans · manager / hooligans · bartender / hooligans
           </div>
           <p className="mt-1.5">
-            Owner &amp; manager get full access; staff sees the board read-only. Change
-            these in Bar Setup → Staff logins.
+            Owner &amp; manager get full access; bartenders see the board read-only.
+            Set real names &amp; passwords in Bar Setup → Staff logins.
           </p>
         </div>
       </div>
