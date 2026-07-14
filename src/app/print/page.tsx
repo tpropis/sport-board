@@ -198,7 +198,12 @@ function PrintSheet({
   return (
     <div className="print-sheet mx-auto max-w-[800px] bg-white px-10 py-8 text-black shadow-xl print:max-w-none print:shadow-none">
       <header className="flex items-end justify-between border-b-4 border-black pb-3">
-        <div>
+        <div className="flex items-end gap-3">
+          {bar.branding?.logoUrl && (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img src={bar.branding.logoUrl} alt="" className="h-12 w-12 object-contain" />
+          )}
+          <div>
           <h1 className="text-3xl font-extrabold uppercase tracking-tight">
             {bar.name} GameBoard
           </h1>
@@ -206,6 +211,7 @@ function PrintSheet({
             {formatLong(today)}
             {tz && ` · all times ${tz}`}
           </p>
+        </div>
         </div>
         <div className="text-right">
           <div className="text-[10px] font-bold uppercase tracking-widest text-neutral-500">

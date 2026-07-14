@@ -4,6 +4,7 @@ import "./globals.css";
 import { StoreProvider } from "@/lib/store";
 import { AppShell } from "@/components/AppShell";
 import { AuthProvider } from "@/lib/auth";
+import { ThemeApplier } from "@/components/ThemeApplier";
 
 const inter = Inter({
   subsets: ["latin"],
@@ -39,6 +40,7 @@ export default function RootLayout({
       <body>
         <AuthProvider>
           <StoreProvider>
+            <ThemeApplier />
             <AppShell>{children}</AppShell>
           </StoreProvider>
         </AuthProvider>

@@ -7,6 +7,9 @@ import { SOUND_OPTIONS } from "@/lib/types";
 import type { Device, Remote, SoundRuleValue, TV } from "@/lib/types";
 import { MARKETS, getMarket, nearestMarket } from "@/lib/markets";
 import { PROVIDERS, getProvider } from "@/lib/providers";
+import { BRAND_PRESETS, hexToChannels, lighten } from "@/lib/branding";
+import type { Branding } from "@/lib/types";
+import { useRef } from "react";
 import Link from "next/link";
 
 function Card({
@@ -193,6 +196,8 @@ export default function BarSetup() {
       </div>
 
       {/* Location & market */}
+      <BrandingCard />
+
       <LocationMarket />
 
       {/* TV order & descriptions */}
@@ -677,5 +682,150 @@ function LocalTeams() {
         </button>
       </div>
     </div>
+  );
+}
+
+function BrandingCard() {
+  const { activeBar, updateBar } = useStore();
+  const b = activeBar.branding ?? {};
+  const fileRef = useRef<HTMLInputElement>(null);
+
+  function set(patch: Partial<Branding>) {
+    updateBar({ branding: { ...b, ...patch } });
+  }
+  function setAccent(accent: string) {
+    set({ accent, glow: lighten(accent, 0.35) });
+  }
+  function onLogo(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = () => set({ logoUrl: reader.result as string });
+    reader.readAsDataURL(file);
+    e.target.value = "";
+  }
+
+  const activeAccent = b.accent ?? "#f5a623";
+
+  return (
+    <Card
+      title="Branding & appearance"
+      hint="White-label the board for your bar — logo, name, and accent color re-theme the whole app instantly."
+    >
+      <div className="grid gap-6 lg:grid-cols-2">
+        {/* Logo + text */}
+        <div className="flex flex-col gap-4">
+          <div>
+            <div className="field-label mb-2">Logo</div>
+            <div className="flex items-center gap-3">
+              <div className="flex h-16 w-16 items-center justify-center overflow-hidden rounded-md border border-ink-600 bg-ink-900">
+                {b.logoUrl ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img src={b.logoUrl} alt="logo" className="h-full w-full object-contain" />
+                ) : (
+                  <span className="text-xs text-chalk-faint">none</span>
+                )}
+              </div>
+              <div className="flex flex-col gap-2">
+                <button className="btn btn-ghost" onClick={() => fileRef.current?.click()}>
+                  ⬆ Upload logo
+                </button>
+                {b.logoUrl && (
+                  <button className="btn btn-danger px-2.5 py-1" onClick={() => set({ logoUrl: undefined })}>
+                    Remove
+                  </button>
+                )}
+              </div>
+              <input ref={fileRef} type="file" accept="image/*" className="hidden" onChange={onLogo} />
+            </div>
+          </div>
+
+          <label className="block">
+            <span className="field-label">Brand name (header)</span>
+            <input
+              className="input mt-1"
+              value={b.brandName ?? ""}
+              placeholder="GameBoard Pro"
+              onChange={(e) => set({ brandName: e.target.value })}
+            />
+          </label>
+          <label className="block">
+            <span className="field-label">Tagline</span>
+            <input
+              className="input mt-1"
+              value={b.tagline ?? ""}
+              placeholder="TV Command Board"
+              onChange={(e) => set({ tagline: e.target.value })}
+            />
+          </label>
+          <label className="block">
+            <span className="field-label">Default board layout</span>
+            <select
+              className="input mt-1"
+              value={b.defaultBoardView ?? "byTv"}
+              onChange={(e) => set({ defaultBoardView: e.target.value as Branding["defaultBoardView"] })}
+            >
+              <option value="byTv">By TV (timelines)</option>
+              <option value="cards">Cards</option>
+              <option value="table">Table</option>
+            </select>
+          </label>
+        </div>
+
+        {/* Accent color */}
+        <div>
+          <div className="field-label mb-2">Accent color</div>
+          <div className="grid grid-cols-4 gap-2">
+            {BRAND_PRESETS.map((p) => {
+              const active = (b.accent ?? "#f5a623").toLowerCase() === p.accent.toLowerCase();
+              return (
+                <button
+                  key={p.name}
+                  onClick={() => set({ accent: p.accent, glow: p.glow })}
+                  title={p.name}
+                  className={`flex h-12 items-center justify-center rounded-md border-2 ${
+                    active ? "border-chalk" : "border-ink-600"
+                  }`}
+                  style={{ background: `${p.accent}22` }}
+                >
+                  <span className="h-5 w-5 rounded-full" style={{ background: p.accent }} />
+                </button>
+              );
+            })}
+          </div>
+          <div className="mt-3 flex items-center gap-3">
+            <input
+              type="color"
+              value={activeAccent}
+              onChange={(e) => setAccent(e.target.value)}
+              className="h-10 w-14 cursor-pointer rounded border border-ink-600 bg-ink-900"
+              aria-label="Custom accent color"
+            />
+            <input
+              className="input max-w-[120px] font-mono"
+              value={activeAccent}
+              onChange={(e) => hexToChannels(e.target.value) && setAccent(e.target.value)}
+            />
+            <button className="btn btn-ghost" onClick={() => set({ accent: undefined, glow: undefined })}>
+              Reset
+            </button>
+          </div>
+
+          {/* Live preview */}
+          <div className="mt-4 rounded-lg border border-ink-600 bg-ink-900/60 p-4">
+            <div className="field-label mb-2">Live preview</div>
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="tv-badge h-10 w-10 border-2 border-amber-accent/60 bg-amber-accent/10 text-amber-glow">5</span>
+              <span className="btn btn-primary px-3 py-1.5 text-xs">Primary</span>
+              <span className="label-chip border-amber-accent/50 bg-amber-accent/15 text-amber-glow">LOCAL</span>
+              <span className="text-amber-glow">Accent text</span>
+            </div>
+            <p className="mt-2 text-xs text-chalk-faint">
+              Changes apply across the whole app immediately.
+            </p>
+          </div>
+        </div>
+      </div>
+    </Card>
   );
 }

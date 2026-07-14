@@ -16,10 +16,12 @@ const config: Config = {
           600: "#2c323b",
           500: "#3a414c",
         },
-        // Warm bar lighting tint
+        // Brand accent — driven by CSS variables so each bar can re-theme the
+        // whole app (defaults to warm bar-lighting amber). RGB channels enable
+        // Tailwind opacity modifiers like `amber-accent/40`.
         amber: {
-          accent: "#f5a623",
-          glow: "#ffb84d",
+          accent: "rgb(var(--brand-accent) / <alpha-value>)",
+          glow: "rgb(var(--brand-glow) / <alpha-value>)",
         },
         // Operational scoreboard green
         signal: {

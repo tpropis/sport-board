@@ -40,17 +40,34 @@ const NAV: { href: string; label: string; group: string }[] = [
 const BARE_ROUTES = ["/print", "/staff"];
 
 function Wordmark() {
+  const { activeBar } = useStore();
+  const b = activeBar?.branding;
   return (
     <Link href="/" className="group flex items-center gap-2.5">
-      <span className="flex h-8 w-8 items-center justify-center rounded-md border border-amber-accent/50 bg-amber-accent/10">
-        <span className="block h-3.5 w-3.5 rounded-[3px] bg-amber-accent shadow-[0_0_10px_2px_rgba(245,166,35,0.5)]" />
-      </span>
+      {b?.logoUrl ? (
+        // eslint-disable-next-line @next/next/no-img-element
+        <img
+          src={b.logoUrl}
+          alt=""
+          className="h-9 w-9 rounded-md border border-ink-600 object-contain"
+        />
+      ) : (
+        <span className="flex h-8 w-8 items-center justify-center rounded-md border border-amber-accent/50 bg-amber-accent/10">
+          <span className="block h-3.5 w-3.5 rounded-[3px] bg-amber-accent shadow-[0_0_10px_2px_rgba(var(--brand-accent)/0.5)]" />
+        </span>
+      )}
       <span className="leading-none">
         <span className="block font-display text-[15px] font-extrabold tracking-tight text-chalk">
-          GameBoard<span className="text-amber-accent"> Pro</span>
+          {b?.brandName ? (
+            b.brandName
+          ) : (
+            <>
+              GameBoard<span className="text-amber-accent"> Pro</span>
+            </>
+          )}
         </span>
         <span className="block font-mono text-[9px] uppercase tracking-[0.25em] text-chalk-faint">
-          TV Command Board
+          {b?.tagline || "TV Command Board"}
         </span>
       </span>
     </Link>

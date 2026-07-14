@@ -40,7 +40,9 @@ const COLS = [
 export default function TodaysBoard() {
   const { activeBar, getBoard, saveBoard, newAssignmentId, currentDate: today } =
     useStore();
-  const [view, setView] = useState<"cards" | "byTv" | "table">("byTv");
+  const [view, setView] = useState<"cards" | "byTv" | "table">(
+    activeBar.branding?.defaultBoardView ?? "byTv",
+  );
   const live = useLive();
   const board = getBoard(today);
   const assignments = sortByTvOrder(board.assignments, activeBar.tvOrder);

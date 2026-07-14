@@ -6,6 +6,9 @@
   --font-inter: "Inter", system-ui, sans-serif;
   --font-mono: "JetBrains Mono", ui-monospace, monospace;
   --font-display: "Inter", system-ui, sans-serif;
+  /* Brand accent (RGB channels) — overridden per bar by the ThemeApplier. */
+  --brand-accent: 245 166 35;
+  --brand-glow: 255 184 77;
 }
 
 @layer base {

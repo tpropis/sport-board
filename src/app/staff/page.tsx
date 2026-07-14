@@ -45,7 +45,16 @@ function StaffView() {
     <div className="min-h-screen bg-ink-950 pb-16">
       {/* Minimal staff header */}
       <header className="sticky top-0 z-20 border-b border-ink-700 bg-ink-950/90 backdrop-blur">
-        <div className="mx-auto flex max-w-3xl items-center justify-between px-4 py-3">
+        <div className="mx-auto flex max-w-3xl items-center justify-between gap-3 px-4 py-3">
+          <div className="flex items-center gap-3">
+            {activeBar.branding?.logoUrl && (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
+                src={activeBar.branding.logoUrl}
+                alt=""
+                className="h-9 w-9 rounded-md border border-ink-600 object-contain"
+              />
+            )}
           <div>
             <div className="font-display text-lg font-extrabold leading-none text-chalk">
               {activeBar.name}
@@ -54,6 +63,7 @@ function StaffView() {
               Staff Board · {formatLong(today)}
               {tz && <span className="text-chalk-faint"> · all times {tz}</span>}
             </div>
+          </div>
           </div>
           <Link href="/" className="btn btn-ghost px-3 py-1.5 text-xs no-print">
             Manager →

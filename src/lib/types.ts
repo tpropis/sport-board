@@ -145,7 +145,17 @@ export interface Bar {
   defaultSoundRule: SoundRuleValue;
   staffViewEnabled: boolean;
   emailRecipients?: string[]; // morning board email list
+  branding?: Branding;
   setupNotes: string;
+}
+
+export interface Branding {
+  logoUrl?: string; // data URL or hosted image
+  accent?: string; // hex, e.g. "#f5a623"
+  glow?: string; // hex (lighter accent)
+  brandName?: string; // header wordmark override
+  tagline?: string;
+  defaultBoardView?: "byTv" | "cards" | "table";
 }
 
 export interface AppState {
