@@ -144,6 +144,7 @@ export interface Bar {
   channelOverrides?: Record<string, Record<string, string>>;
   defaultSoundRule: SoundRuleValue;
   staffViewEnabled: boolean;
+  emailRecipients?: string[]; // morning board email list
   setupNotes: string;
 }
 

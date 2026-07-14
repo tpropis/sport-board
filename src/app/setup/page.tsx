@@ -359,6 +359,104 @@ export default function BarSetup() {
       <Card title="Local priority teams" hint="These get top billing in the priority rules.">
         <LocalTeams />
       </Card>
+
+      <Card
+        title="Morning board email"
+        hint="Email the daily board to staff. Send on demand here, or automate it (see the Print View's kiosk/cron options)."
+      >
+        <EmailCard />
+      </Card>
+    </div>
+  );
+}
+
+function EmailCard() {
+  const { activeBar, updateBar, getBoard, currentDate } = useStore();
+  const [val, setVal] = useState("");
+  const [status, setStatus] = useState<string>("");
+  const recipients = activeBar.emailRecipients ?? [];
+
+  async function send() {
+    setStatus("Sending…");
+    const board = getBoard(currentDate);
+    try {
+      const res = await fetch("/api/email-board", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ to: recipients, date: currentDate, bar: activeBar, board }),
+      });
+      const json = await res.json();
+      setStatus(
+        json.sent
+          ? `✓ Sent to ${recipients.length} recipient${recipients.length === 1 ? "" : "s"}.`
+          : `Not sent — ${json.reason}`,
+      );
+    } catch (e) {
+      setStatus(`Failed — ${String(e)}`);
+    }
+  }
+
+  return (
+    <div>
+      <div className="flex flex-wrap gap-2">
+        {recipients.map((r) => (
+          <span
+            key={r}
+            className="inline-flex items-center gap-2 rounded-full border border-signal/40 bg-signal/10 px-3 py-1.5 text-sm text-signal"
+          >
+            {r}
+            <button
+              onClick={() =>
+                updateBar({ emailRecipients: recipients.filter((x) => x !== r) })
+              }
+              className="text-signal/70 hover:text-signal"
+            >
+              ✕
+            </button>
+          </span>
+        ))}
+        {recipients.length === 0 && (
+          <span className="text-sm text-chalk-faint">No recipients yet.</span>
+        )}
+      </div>
+      <div className="mt-3 flex flex-wrap items-center gap-2">
+        <input
+          className="input max-w-xs"
+          type="email"
+          placeholder="bartender@bar.com"
+          value={val}
+          onChange={(e) => setVal(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === "Enter" && val.includes("@")) {
+              updateBar({ emailRecipients: [...recipients, val.trim()] });
+              setVal("");
+            }
+          }}
+        />
+        <button
+          onClick={() => {
+            if (val.includes("@")) {
+              updateBar({ emailRecipients: [...recipients, val.trim()] });
+              setVal("");
+            }
+          }}
+          className="btn btn-ghost"
+        >
+          Add
+        </button>
+        <button
+          onClick={send}
+          disabled={recipients.length === 0}
+          className="btn btn-signal"
+        >
+          ✉ Send today&apos;s board
+        </button>
+      </div>
+      {status && <p className="mt-2 text-sm text-chalk-dim">{status}</p>}
+      <p className="mt-2 text-xs text-chalk-faint">
+        Requires a Resend API key in the deploy&apos;s environment. Without it, sending
+        is a safe no-op and reports that it&apos;s not configured.
+      </p>
     </div>
   );
 }
