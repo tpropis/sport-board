@@ -379,14 +379,28 @@ export function useStore(): StoreContextValue {
   return ctx;
 }
 
-/** Sort assignments into the bar's configured TV order (never sequential). */
-export function sortByTvOrder<T extends { tvNumber: number }>(
+/** Parse a display clock ("1:35 PM", "All day") to minutes-since-midnight. */
+export function clockMinutes(t?: string): number {
+  if (!t) return 9999;
+  if (/all day/i.test(t)) return 0;
+  const m = t.match(/(\d{1,2}):(\d{2})\s*(AM|PM)/i);
+  if (!m) return 9999;
+  let h = Number(m[1]) % 12;
+  if (/pm/i.test(m[3])) h += 12;
+  return h * 60 + Number(m[2]);
+}
+
+/** Sort assignments by the bar's TV order (never sequential), then start time —
+ *  so a TV that carries several games shows them in chronological order. */
+export function sortByTvOrder<T extends { tvNumber: number; startTime?: string }>(
   items: T[],
   tvOrder: number[],
 ): T[] {
   return [...items].sort((a, b) => {
     const ia = tvOrder.indexOf(a.tvNumber);
     const ib = tvOrder.indexOf(b.tvNumber);
-    return (ia === -1 ? 999 : ia) - (ib === -1 ? 999 : ib);
+    const d = (ia === -1 ? 999 : ia) - (ib === -1 ? 999 : ib);
+    if (d !== 0) return d;
+    return clockMinutes(a.startTime) - clockMinutes(b.startTime);
   });
 }

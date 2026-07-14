@@ -40,7 +40,7 @@ const COLS = [
 export default function TodaysBoard() {
   const { activeBar, getBoard, saveBoard, newAssignmentId, currentDate: today } =
     useStore();
-  const [view, setView] = useState<"cards" | "table">("cards");
+  const [view, setView] = useState<"cards" | "byTv" | "table">("byTv");
   const live = useLive();
   const board = getBoard(today);
   const assignments = sortByTvOrder(board.assignments, activeBar.tvOrder);
@@ -72,17 +72,19 @@ export default function TodaysBoard() {
           {confirmed}/{assignments.length} confirmed
         </Pill>
         <div className="flex overflow-hidden rounded-md border border-ink-600">
-          {(["cards", "table"] as const).map((v) => (
-            <button
-              key={v}
-              onClick={() => setView(v)}
-              className={`px-3 py-1.5 text-sm font-semibold capitalize ${
-                view === v ? "bg-amber-accent/20 text-amber-glow" : "bg-ink-800 text-chalk-dim"
-              }`}
-            >
-              {v}
-            </button>
-          ))}
+          {([["byTv", "By TV"], ["cards", "Cards"], ["table", "Table"]] as const).map(
+            ([v, label]) => (
+              <button
+                key={v}
+                onClick={() => setView(v)}
+                className={`px-3 py-1.5 text-sm font-semibold ${
+                  view === v ? "bg-amber-accent/20 text-amber-glow" : "bg-ink-800 text-chalk-dim"
+                }`}
+              >
+                {label}
+              </button>
+            ),
+          )}
         </div>
         {live && live.all.length > 0 && (
           <button onClick={autoBuild} className="btn btn-signal">
@@ -122,6 +124,8 @@ export default function TodaysBoard() {
             </Link>
           </div>
         </div>
+      ) : view === "byTv" ? (
+        <ByTvView assignments={assignments} tvOrder={activeBar.tvOrder} providerName={providerName} tz={tz} />
       ) : view === "cards" ? (
         <div className="grid gap-3 lg:grid-cols-2">
           {assignments.map((a) => (
@@ -316,4 +320,70 @@ function blankFromEvent(e: { name: string; league: string; sport: string; local:
     labels: e.local ? ["LOCAL"] : [],
     confirmed: false,
   };
+}
+
+function ByTvView({
+  assignments,
+  tvOrder,
+  providerName,
+  tz,
+}: {
+  assignments: Assignment[];
+  tvOrder: number[];
+  providerName: string;
+  tz: string;
+}) {
+  // Group by TV, in wall order; each TV shows its games in time order.
+  const byTv = tvOrder
+    .map((n) => ({ tv: n, games: assignments.filter((a) => a.tvNumber === n) }))
+    .filter((g) => g.games.length > 0);
+
+  return (
+    <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+      {byTv.map(({ tv, games }) => (
+        <div key={tv} className="panel overflow-hidden">
+          <div className="flex items-center gap-2 border-b border-ink-700 bg-ink-900/60 px-3 py-2">
+            <TVBadge number={tv} size="sm" />
+            <span className="font-mono text-[11px] uppercase tracking-widest text-chalk-faint">
+              TV {tv}
+            </span>
+            {games.length > 1 && (
+              <span className="ml-auto rounded-full border border-amber-accent/40 bg-amber-accent/10 px-2 py-0.5 text-[10px] font-semibold text-amber-glow">
+                {games.length} games today
+              </span>
+            )}
+          </div>
+          <div className="divide-y divide-ink-700/60">
+            {games.map((a) => {
+              const matchup =
+                a.team1 && a.team2 ? `${a.team1} vs ${a.team2}` : a.eventName;
+              const real = !/^(tbd|tba|undecided)$/i.test((a.team1 ?? "").trim());
+              const title = a.team1 && a.team2 && real ? matchup : a.eventName;
+              return (
+                <div key={a.id} className="flex items-start gap-3 px-3 py-2.5">
+                  <div className="w-16 shrink-0">
+                    <div className="tnum font-mono text-sm font-bold text-amber-glow">
+                      {a.startTime === "12:00 AM" ? "All day" : a.startTime}
+                    </div>
+                    {tz && a.startTime !== "12:00 AM" && (
+                      <div className="font-mono text-[9px] uppercase text-chalk-faint">{tz}</div>
+                    )}
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <div className="truncate font-semibold text-chalk">{title}</div>
+                    <div className="truncate text-xs text-chalk-dim">
+                      {a.watchOn}
+                      {a.directvChannel ? ` · ${providerName} ${a.directvChannel}` : ""}
+                      {a.streamingApp ? ` · ${a.streamingApp}` : ""}
+                    </div>
+                    <div className="mt-0.5 text-[11px] text-chalk-faint">🔊 {a.soundRule}</div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      ))}
+    </div>
+  );
 }

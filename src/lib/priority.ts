@@ -18,7 +18,9 @@ import {
 } from "./markets";
 
 export interface DrawResult {
-  score: number;
+  score: number; // total crowd draw (incl. local) — used for board ranking
+  magnitude: number; // universal "bigness" (national event + stakes) — earns TVs
+  localDraw: number; // matched local-team draw, 0 if none
   reasons: string[];
 }
 
@@ -46,21 +48,23 @@ export function leagueKeyFor(a: Pick<Assignment, "league" | "sport">): LeagueKey
   return "OTHER";
 }
 
+// Bonus doubles as "magnitude" — a national-event tier that clearly tops a
+// regular local game (a local team's draw peaks ~100). Super Bowl reigns.
 const NATIONAL: { test: RegExp; bonus: number; label: string; requireLeague?: LeagueKey }[] = [
-  { test: /super bowl/, bonus: 70, label: "Super Bowl", requireLeague: "NFL" },
-  { test: /world series/, bonus: 55, label: "World Series", requireLeague: "MLB" },
-  { test: /home run derby|all-star game|all star game/, bonus: 34, label: "MLB All-Star", requireLeague: "MLB" },
-  { test: /college football playoff|national championship|natl championship/, bonus: 58, label: "Championship", requireLeague: "CFB" },
-  { test: /nba finals/, bonus: 52, label: "NBA Finals", requireLeague: "NBA" },
-  { test: /stanley cup/, bonus: 48, label: "Stanley Cup", requireLeague: "NHL" },
-  { test: /final four|march madness/, bonus: 50, label: "March Madness", requireLeague: "CBB" },
-  { test: /world cup|fifa/, bonus: 46, label: "World Cup", requireLeague: "SOCCER_INTL" },
-  { test: /olympic/, bonus: 46, label: "Olympics" },
-  { test: /masters|u\.?s\.? open|the open|pga championship|ryder cup/, bonus: 34, label: "Golf major", requireLeague: "GOLF" },
-  { test: /college world series/, bonus: 26, label: "College World Series", requireLeague: "COLLEGE_BASEBALL" },
-  { test: /champions league|uefa/, bonus: 30, label: "Champions League", requireLeague: "SOCCER_INTL" },
-  { test: /ufc \d|title|main event|heavyweight/, bonus: 30, label: "Marquee fight", requireLeague: "MMA" },
-  { test: /wimbledon|grand slam/, bonus: 24, label: "Tennis major", requireLeague: "TENNIS" },
+  { test: /super bowl/, bonus: 120, label: "Super Bowl", requireLeague: "NFL" },
+  { test: /college football playoff|national championship|natl championship/, bonus: 95, label: "Championship", requireLeague: "CFB" },
+  { test: /world series/, bonus: 90, label: "World Series", requireLeague: "MLB" },
+  { test: /nba finals/, bonus: 88, label: "NBA Finals", requireLeague: "NBA" },
+  { test: /final four|march madness/, bonus: 82, label: "March Madness", requireLeague: "CBB" },
+  { test: /stanley cup/, bonus: 78, label: "Stanley Cup", requireLeague: "NHL" },
+  { test: /olympic/, bonus: 60, label: "Olympics" },
+  { test: /world cup|fifa/, bonus: 55, label: "World Cup", requireLeague: "SOCCER_INTL" },
+  { test: /ufc \d|title|main event|heavyweight/, bonus: 48, label: "Marquee fight", requireLeague: "MMA" },
+  { test: /masters|u\.?s\.? open|the open|pga championship|ryder cup/, bonus: 46, label: "Golf major", requireLeague: "GOLF" },
+  { test: /home run derby|all-star game|all star game/, bonus: 42, label: "MLB All-Star", requireLeague: "MLB" },
+  { test: /champions league|uefa/, bonus: 40, label: "Champions League", requireLeague: "SOCCER_INTL" },
+  { test: /wimbledon|grand slam/, bonus: 35, label: "Tennis major", requireLeague: "TENNIS" },
+  { test: /college world series/, bonus: 30, label: "College World Series", requireLeague: "COLLEGE_BASEBALL" },
 ];
 
 function nationalBonus(text: string, league: LeagueKey): { bonus: number; label?: string } {
@@ -90,6 +94,8 @@ export function scoreEvent(a: Assignment, market?: Market): DrawResult {
   const text = `${a.eventName} ${a.league ?? ""} ${a.sport ?? ""}`.toLowerCase();
 
   let score = 0;
+  let magnitude = 0; // universal bigness (national + stakes), excludes local
+  let localDraw = 0;
 
   if (market) {
     const base = regionInterest(market.region, league);
@@ -99,6 +105,7 @@ export function scoreEvent(a: Assignment, market?: Market): DrawResult {
     const local = localTeamPull(a, market);
     if (local.draw > 0) {
       score += local.draw;
+      localDraw = local.draw;
       reasons.push(`Local team — ${local.team}: +${local.draw}`);
     } else if (a.labels.includes("LOCAL")) {
       score += 18;
@@ -108,33 +115,38 @@ export function scoreEvent(a: Assignment, market?: Market): DrawResult {
     score += 50;
   }
 
-  // Magnitude
+  // Stakes (count toward magnitude — universally bigger, not just local).
   if (a.labels.includes("PLAYOFF")) {
     score += 24;
+    magnitude += 24;
     reasons.push("Playoff: +24");
   }
   if (a.labels.includes("BIG GAME")) {
     score += 12;
+    magnitude += 8;
     reasons.push("Big game: +12");
   }
   if (/\bfinal\b|\bfinals\b|championship|game 7|elimination|clinch/.test(text)) {
     score += 22;
+    magnitude += 22;
     reasons.push("Final / elimination: +22");
   }
 
-  // National draw
+  // National draw — the marquee-event tier.
   const nat = nationalBonus(text, league);
   if (nat.bonus > 0) {
     score += nat.bonus;
+    magnitude += nat.bonus;
     reasons.push(`${nat.label}: +${nat.bonus}`);
   }
   // USA in an international match is a crowd magnet.
   if (league === "SOCCER_INTL" && /\busa\b|united states|usmnt|uswnt|u\.s\./.test(text)) {
     score += 28;
+    magnitude += 20;
     reasons.push("Team USA: +28");
   }
 
-  return { score: Math.round(score), reasons };
+  return { score: Math.round(score), magnitude: Math.round(magnitude), localDraw, reasons };
 }
 
 /**
