@@ -127,6 +127,8 @@ function buildBar(): Bar {
       number,
       position,
       description: TV_DESCRIPTIONS[number],
+      // The center screens are the main/priority TVs — big games land here.
+      main: number === 5 || number === 9,
       defaultDevice: "DIRECTV box",
       defaultRemote: "Main DIRECTV Remote",
       defaultInput: "HDMI 1",

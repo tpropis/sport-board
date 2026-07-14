@@ -29,6 +29,7 @@ export interface TV {
   number: number;
   position: number;
   description: string;
+  main?: boolean; // priority / main screen (center or large) — gets the big games
   defaultDevice?: string;
   defaultRemote?: string;
   defaultInput?: string;

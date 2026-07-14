@@ -206,8 +206,8 @@ export default function BarSetup() {
 
       {/* TV order & descriptions */}
       <Card
-        title="TVs · custom order & descriptions"
-        hint="Order is exactly how the wall reads left → right. Numbering does not need to be sequential."
+        title="TVs · order, main screens & descriptions"
+        hint="Order is exactly how the wall reads left → right (numbering needn't be sequential). Mark your center / big screens as ★ Main — the highest-draw games auto-land there first."
       >
         <div className="flex flex-col gap-2">
           {activeBar.tvOrder.map((n, i) => {
@@ -235,11 +235,22 @@ export default function BarSetup() {
                 </div>
                 <TVBadge number={n} size="md" ignored={tv.ignored} />
                 <input
-                  className="input min-w-[180px] flex-1"
+                  className="input min-w-[160px] flex-1"
                   value={tv.description}
                   placeholder="Location description"
                   onChange={(e) => updateTv(n, { description: e.target.value })}
                 />
+                <button
+                  onClick={() => updateTv(n, { main: !tv.main })}
+                  title="Main / priority TV — the big games go here"
+                  className={`inline-flex items-center gap-1.5 rounded-md border px-2.5 py-1.5 text-xs font-semibold transition-colors ${
+                    tv.main
+                      ? "border-amber-accent/60 bg-amber-accent/15 text-amber-glow"
+                      : "border-ink-600 bg-ink-800 text-chalk-faint hover:text-chalk-dim"
+                  }`}
+                >
+                  {tv.main ? "★ Main" : "☆ Main"}
+                </button>
                 <label className="flex items-center gap-2 text-xs text-chalk-dim">
                   <input
                     type="checkbox"
@@ -797,21 +808,46 @@ function BrandingCard() {
               );
             })}
           </div>
-          <div className="mt-3 flex items-center gap-3">
-            <input
-              type="color"
-              value={activeAccent}
-              onChange={(e) => setAccent(e.target.value)}
-              className="h-10 w-14 cursor-pointer rounded border border-ink-600 bg-ink-900"
-              aria-label="Custom accent color"
-            />
-            <input
-              className="input max-w-[120px] font-mono"
-              value={activeAccent}
-              onChange={(e) => hexToChannels(e.target.value) && setAccent(e.target.value)}
-            />
-            <button className="btn btn-ghost" onClick={() => set({ accent: undefined, glow: undefined })}>
-              Reset
+          <div className="mt-3 grid gap-3 sm:grid-cols-2">
+            <label className="flex items-center gap-2">
+              <input
+                type="color"
+                value={activeAccent}
+                onChange={(e) => setAccent(e.target.value)}
+                className="h-10 w-12 cursor-pointer rounded border border-ink-600 bg-ink-900"
+                aria-label="Custom accent color"
+              />
+              <span className="field-label">Accent</span>
+              <input
+                className="input max-w-[110px] font-mono"
+                value={activeAccent}
+                onChange={(e) => hexToChannels(e.target.value) && setAccent(e.target.value)}
+              />
+            </label>
+            <label className="flex items-center gap-2">
+              <input
+                type="color"
+                value={b.glow ?? "#ffb84d"}
+                onChange={(e) => hexToChannels(e.target.value) && set({ glow: e.target.value })}
+                className="h-10 w-12 cursor-pointer rounded border border-ink-600 bg-ink-900"
+                aria-label="Highlight color"
+              />
+              <span className="field-label">Highlight</span>
+              <input
+                className="input max-w-[110px] font-mono"
+                value={b.glow ?? "#ffb84d"}
+                onChange={(e) => hexToChannels(e.target.value) && set({ glow: e.target.value })}
+              />
+            </label>
+          </div>
+          <div className="mt-2">
+            <button
+              className="btn btn-ghost text-xs"
+              onClick={() =>
+                updateBar({ branding: { defaultBoardView: b.defaultBoardView } })
+              }
+            >
+              Reset all branding
             </button>
           </div>
 

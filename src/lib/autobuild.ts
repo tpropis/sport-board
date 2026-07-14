@@ -68,7 +68,15 @@ export function autoBuildAssignments(
 ): Assignment[] {
   const market = getMarket(bar.market);
   const overrides = bar.channelOverrides?.[bar.providerId ?? ""];
-  const tvs = bar.tvOrder.filter((n) => !bar.tvs.find((t) => t.number === n)?.ignored);
+  // Main/priority TVs (center or large) are tried first, so the highest-draw
+  // games — processed first — land on them. Wall order is otherwise preserved.
+  const tvs = bar.tvOrder
+    .filter((n) => !bar.tvs.find((t) => t.number === n)?.ignored)
+    .sort((a, b) => {
+      const am = bar.tvs.find((t) => t.number === a)?.main ? 0 : 1;
+      const bm = bar.tvs.find((t) => t.number === b)?.main ? 0 : 1;
+      return am - bm;
+    });
 
   // Score + time-window every playable event, most popular first.
   const ranked = events

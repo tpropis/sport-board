@@ -335,23 +335,36 @@ function ByTvView({
   providerName: string;
   tz: string;
 }) {
+  const { activeBar } = useStore();
   // Group by TV, in wall order; each TV shows its games in time order.
   const byTv = tvOrder
-    .map((n) => ({ tv: n, games: assignments.filter((a) => a.tvNumber === n) }))
+    .map((n) => ({
+      tv: n,
+      main: !!activeBar.tvs.find((t) => t.number === n)?.main,
+      games: assignments.filter((a) => a.tvNumber === n),
+    }))
     .filter((g) => g.games.length > 0);
 
   return (
     <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
-      {byTv.map(({ tv, games }) => (
-        <div key={tv} className="panel overflow-hidden">
+      {byTv.map(({ tv, main, games }) => (
+        <div
+          key={tv}
+          className={`panel overflow-hidden ${main ? "ring-1 ring-amber-accent/40" : ""}`}
+        >
           <div className="flex items-center gap-2 border-b border-ink-700 bg-ink-900/60 px-3 py-2">
             <TVBadge number={tv} size="sm" />
             <span className="font-mono text-[11px] uppercase tracking-widest text-chalk-faint">
               TV {tv}
             </span>
+            {main && (
+              <span className="rounded-full border border-amber-accent/50 bg-amber-accent/15 px-2 py-0.5 text-[9px] font-bold uppercase tracking-wider text-amber-glow">
+                ★ Main
+              </span>
+            )}
             {games.length > 1 && (
-              <span className="ml-auto rounded-full border border-amber-accent/40 bg-amber-accent/10 px-2 py-0.5 text-[10px] font-semibold text-amber-glow">
-                {games.length} games today
+              <span className="ml-auto rounded-full border border-ink-600 bg-ink-800 px-2 py-0.5 text-[10px] font-semibold text-chalk-dim">
+                {games.length} today
               </span>
             )}
           </div>
