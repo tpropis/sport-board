@@ -3,6 +3,7 @@ import type { Assignment, Bar } from "./types";
 import { scoreEvent } from "./priority";
 import { getMarket } from "./markets";
 import { pickBroadcast } from "./providers";
+import { FILLER_PROGRAMS } from "./filler";
 
 function toBlank(e: ScheduleEvent): Assignment {
   return {
@@ -126,6 +127,33 @@ export function autoBuildAssignments(
       placed++;
     }
   });
+
+  // Fill any TV with no game with default programming — never leave one blank.
+  const placedTvs = new Set(out.map((a) => a.tvNumber));
+  bar.tvOrder
+    .filter((n) => !bar.tvs.find((t) => t.number === n)?.ignored && !placedTvs.has(n))
+    .forEach((tv, idx) => {
+      const f = FILLER_PROGRAMS[idx % FILLER_PROGRAMS.length];
+      const tvCfg = bar.tvs.find((t) => t.number === tv);
+      const { watchOn, channel } = pickBroadcast([f.network], bar.providerId, overrides);
+      out.push({
+        id: mkId(),
+        filler: true,
+        tvNumber: tv,
+        priority: 900 + idx,
+        eventName: f.name,
+        sport: "Studio show",
+        league: "Default programming",
+        watchOn,
+        directvChannel: channel,
+        device: tvCfg?.defaultDevice ?? "DIRECTV box",
+        remote: tvCfg?.defaultRemote ?? "Main DIRECTV Remote",
+        soundRule: "Music stays on",
+        labels: [],
+        notes: f.note,
+        confirmed: false,
+      });
+    });
 
   return out;
 }

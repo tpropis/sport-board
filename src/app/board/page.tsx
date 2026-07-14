@@ -356,36 +356,126 @@ function ByTvView({
             )}
           </div>
           <div className="divide-y divide-ink-700/60">
-            {games.map((a) => {
-              const matchup =
-                a.team1 && a.team2 ? `${a.team1} vs ${a.team2}` : a.eventName;
-              const real = !/^(tbd|tba|undecided)$/i.test((a.team1 ?? "").trim());
-              const title = a.team1 && a.team2 && real ? matchup : a.eventName;
-              return (
-                <div key={a.id} className="flex items-start gap-3 px-3 py-2.5">
-                  <div className="w-16 shrink-0">
-                    <div className="tnum font-mono text-sm font-bold text-amber-glow">
-                      {a.startTime === "12:00 AM" ? "All day" : a.startTime}
-                    </div>
-                    {tz && a.startTime !== "12:00 AM" && (
-                      <div className="font-mono text-[9px] uppercase text-chalk-faint">{tz}</div>
-                    )}
-                  </div>
-                  <div className="min-w-0 flex-1">
-                    <div className="truncate font-semibold text-chalk">{title}</div>
-                    <div className="truncate text-xs text-chalk-dim">
-                      {a.watchOn}
-                      {a.directvChannel ? ` · ${providerName} ${a.directvChannel}` : ""}
-                      {a.streamingApp ? ` · ${a.streamingApp}` : ""}
-                    </div>
-                    <div className="mt-0.5 text-[11px] text-chalk-faint">🔊 {a.soundRule}</div>
-                  </div>
-                </div>
-              );
-            })}
+            {games.map((a) => (
+              <GameRow key={a.id} a={a} providerName={providerName} tz={tz} />
+            ))}
           </div>
         </div>
       ))}
+    </div>
+  );
+}
+
+function GameRow({ a, providerName, tz }: { a: Assignment; providerName: string; tz: string }) {
+  const { activeBar } = useStore();
+  const live = useLive()?.lookup(a.eventId, a.eventName);
+  const [open, setOpen] = useState(false);
+
+  const matchup = a.team1 && a.team2 ? `${a.team1} vs ${a.team2}` : a.eventName;
+  const real = !/^(tbd|tba|undecided)$/i.test((a.team1 ?? "").trim());
+  const title = a.team1 && a.team2 && real ? matchup : a.eventName;
+
+  // "Why it's on" — draw reasoning from the engine (skip for filler).
+  const draw = a.filler ? null : scoreEvent(a, getMarket(activeBar.market));
+
+  return (
+    <div className={a.filler ? "bg-ink-900/40" : ""}>
+      <button
+        onClick={() => setOpen((v) => !v)}
+        className="flex w-full items-start gap-3 px-3 py-2.5 text-left hover:bg-ink-800/40"
+      >
+        <div className="w-16 shrink-0">
+          <div className={`tnum font-mono text-sm font-bold ${a.filler ? "text-chalk-faint" : "text-amber-glow"}`}>
+            {a.startTime === "12:00 AM" ? "All day" : a.startTime || "—"}
+          </div>
+          {tz && a.startTime && a.startTime !== "12:00 AM" && (
+            <div className="font-mono text-[9px] uppercase text-chalk-faint">{tz}</div>
+          )}
+        </div>
+        <div className="min-w-0 flex-1">
+          <div className="flex items-center gap-2">
+            <span className={`truncate font-semibold ${a.filler ? "text-chalk-dim" : "text-chalk"}`}>
+              {title}
+            </span>
+            {a.filler && (
+              <span className="shrink-0 rounded border border-ink-600 px-1.5 py-0.5 text-[9px] uppercase tracking-wider text-chalk-faint">
+                filler
+              </span>
+            )}
+            {live && live.status.state !== "pre" && (
+              <span className="shrink-0 rounded bg-signal/15 px-1.5 py-0.5 text-[10px] font-semibold text-signal">
+                {live.status.state === "in" && live.status.clock ? live.status.clock : live.status.detail}
+                {live.score1 != null ? ` ${live.score1}–${live.score2}` : ""}
+              </span>
+            )}
+          </div>
+          <div className="truncate text-xs text-chalk-dim">
+            {a.watchOn}
+            {a.directvChannel ? ` · ${providerName} ${a.directvChannel}` : ""}
+            {a.streamingApp ? ` · ${a.streamingApp}` : ""}
+          </div>
+          <div className="mt-0.5 text-[11px] text-chalk-faint">🔊 {a.soundRule}</div>
+        </div>
+        <span className="mt-1 shrink-0 text-chalk-faint">{open ? "▲" : "▼"}</span>
+      </button>
+
+      {open && (
+        <div className="space-y-2.5 border-t border-ink-700/60 bg-ink-950/40 px-3 py-3 text-xs">
+          {/* What it is */}
+          <div>
+            <div className="field-label mb-0.5">{a.filler ? "What's on" : "Event"}</div>
+            <div className="text-chalk-dim">
+              {a.filler ? a.notes : [a.sport, a.league].filter(Boolean).join(" · ") || a.eventName}
+              {live?.venue ? ` · ${live.venue}` : ""}
+              {live?.city && !live?.venue ? ` · ${live.city}` : ""}
+            </div>
+          </div>
+
+          {/* Why it's here */}
+          {draw && (
+            <div>
+              <div className="field-label mb-0.5">
+                Why this TV · draw {draw.score}
+              </div>
+              <div className="flex flex-wrap gap-1">
+                {draw.reasons.map((r) => (
+                  <span key={r} className="rounded border border-ink-600 bg-ink-800 px-1.5 py-0.5 text-chalk-dim">
+                    {r}
+                  </span>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* How to pull it up */}
+          <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+            <Detail label="Watch on" value={a.watchOn} />
+            <Detail label={`${providerName} ch`} value={a.directvChannel} />
+            <Detail label="Streaming" value={a.streamingApp} />
+            <Detail label="Device" value={a.device} />
+            <Detail label="Remote" value={a.remote} />
+            <Detail label="Sound" value={a.soundRule} />
+            {live && <Detail label="Status" value={live.status.detail} />}
+          </div>
+
+          {a.notes && !a.filler && (
+            <p className="rounded border border-ink-700 bg-ink-900/60 px-2 py-1.5 text-chalk-dim">
+              <span className="text-chalk-faint">Note: </span>
+              {a.notes}
+            </p>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function Detail({ label, value }: { label: string; value?: string }) {
+  if (!value) return null;
+  return (
+    <div>
+      <div className="font-mono text-[9px] uppercase tracking-wider text-chalk-faint">{label}</div>
+      <div className="text-chalk-dim">{value}</div>
     </div>
   );
 }

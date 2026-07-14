@@ -92,6 +92,7 @@ export interface SoundRule {
 export interface Assignment {
   id: string;
   eventId?: string; // links to a live ScheduleEvent for status/score updates
+  filler?: boolean; // default programming when no live game (SportsCenter, etc.)
   tvNumber: number;
   priority: number;
   eventName: string;
